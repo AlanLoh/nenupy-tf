@@ -24,8 +24,28 @@ from nenupytf.read import Lane
 # -------------------------- ObsRepo -------------------------- #
 # ============================================================= #
 class ObsRepo(object):
+    """ Class to handle a NenuFAR-TF repository.
+        Once the path of the repository is given,
+        it automatically search for the '*.spectra' files and
+        sort the corresponding attributes with respect to the
+        lane index.
+
+        Parameters
+        ----------
+        repo : str
+            Repository where observation files are stored.
+
+        Attributes
+        ----------
+        spectra : `numpy.array`
+            Array of `Lane` objects (each `Lane` is an object
+            embedding memmap views of the .spectra files)
+        lanes : `numpy.array`
+            Array of lane indices used during the observation
+        files : `numpy.array`
+            Array of .spectra files that lies in the repository
     """
-    """
+
     def __init__(self, repo):
         self.spectra = None
         self.lanes = None

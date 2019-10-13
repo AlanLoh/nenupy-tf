@@ -1,0 +1,30 @@
+#! /usr/bin/python3
+# -*- coding: utf-8 -*-
+
+__author__ = 'Alan Loh'
+__copyright__ = 'Copyright 2019, nenupytf'
+__credits__ = ['Alan Loh']
+__maintainer__ = 'Alan Loh'
+__email__ = 'alan.loh@obspm.fr'
+__status__ = 'WIP'
+
+
+import argparse
+
+from nenupytf.read import Spectrum
+
+
+if __name__ == 'main':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-o',
+        '--obs',
+        type=str,
+        default='/.',
+        help='Observation directory',
+        required=False
+        )
+    args = parser.parse_args()
+
+    spec = Spectrum(directory=args.obs)
+    spec.select()

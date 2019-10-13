@@ -22,7 +22,25 @@ from nenupytf.read import ObsRepo
 class Spectrum(ObsRepo):
     """
     """
+
     def __init__(self, directory):
         super().__init__(repo=directory)
 
+
+    def select(self, **kwargs):
+        """
+        """
+        self._parameters(kwargs)
+        return
+
+
+    def _parameters(self, **kwargs):
+        """ Read the selection parameters
+        """
+        self.selbeam = kwargs.get('beam', 0)
+        t_default = []
+        self.selfreq = kwargs.get('time', t_default)
+        f_default = []
+        self.seltime = kwargs.get('frequency', f_default)
+        return
 # ============================================================= #

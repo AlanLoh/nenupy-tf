@@ -11,7 +11,10 @@ setup(
     include_package_data = True,
     install_requires = ['numpy', 'astropy'],
     python_requires = '>=3.5',
-    scripts = [],
+    scripts = [
+        'bin/nenupytf-plot',
+        'bin/nenupytf-info'
+        ],
     version = nenupytf.__version__,
     description = 'NenuFAR Python package',
     url = 'https://github.com/AlanLoh/nenupy-tf.git',
