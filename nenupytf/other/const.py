@@ -14,3 +14,12 @@ __all__ = [
 
 
 max_bsn = 200e6 / 1024.
+
+allowed_stokes = [
+        'i',
+        'q',
+        'u',
+        'v',
+        'fracv'
+        ]
+
