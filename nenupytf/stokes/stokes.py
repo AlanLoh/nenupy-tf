@@ -79,7 +79,7 @@ class NenuStokes(object):
         if not isinstance(s, str):
             raise TypeError('String expected.')
         self._stokes = s.lower()
-        if self._stokes not in self.allowed_stokes:
+        if self._stokes not in allowed_stokes:
             raise ValueError('Wrong Stokes parameter.')
 
 
