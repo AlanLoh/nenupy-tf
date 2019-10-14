@@ -24,6 +24,14 @@ if __name__ == 'main':
         help='Observation directory',
         required=False
         )
+    parser.add_argument(
+        '-l',
+        '--lane',
+        type=int,
+        default=0,
+        help='Lane selected',
+        required=False
+        )
     args = parser.parse_args()
 
     spec = Spectrum(directory=args.obs)

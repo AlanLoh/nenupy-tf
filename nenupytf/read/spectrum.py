@@ -30,6 +30,8 @@ class Spectrum(ObsRepo):
     def select(self, **kwargs):
         """
         """
+        for lane, lspectrum in zip(self.lanes, self.spectra):
+            ...
         self._parameters(kwargs)
         return
 
