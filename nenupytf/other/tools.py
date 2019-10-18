@@ -9,11 +9,13 @@ __maintainer__ = 'Alan Loh'
 __email__ = 'alan.loh@obspm.fr'
 __status__ = 'Production'
 __all__ = [
-    'idx_of'
+    'idx_of',
+    'to_unix'
     ]
 
 
 import numpy as np
+from astropy.time import Time
 
 
 def idx_of(array, value, order='low'):
@@ -55,4 +57,10 @@ def idx_of(array, value, order='low'):
                 diff == diff[diff >= 0.].min()
                 )[0, 0]
 
+
+def to_unix(time):
+    """
+    """
+    time = Time(time, format='unix', precision=7) 
+    return time
 

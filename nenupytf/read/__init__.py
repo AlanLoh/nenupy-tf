@@ -3,5 +3,5 @@
 
 from .lane import *
 from .obsrepo import *
-from spectrum import *
+from .spectrum import *
 

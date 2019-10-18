@@ -21,13 +21,6 @@ __all__ = [
 import numpy as np
 
 from nenupytf.other import allowed_stokes
-# allowed_stokes = [
-#     'i',
-#     'q',
-#     'u',
-#     'v',
-#     'fracv'
-#     ]
 
 
 # ============================================================= #

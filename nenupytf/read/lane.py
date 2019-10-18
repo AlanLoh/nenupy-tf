@@ -20,59 +20,8 @@ import numpy as np
 
 from nenupytf.other import header_struct, max_bsn
 from nenupytf.stokes import NenuStokes
-from nenupytf.other import idx_of
-# max_bsn = 200e6 / 1024.
-# header_struct = [
-#     ('idx', 'uint64'),
-#     ('TIMESTAMP', 'uint64'),
-#     ('BLOCKSEQNUMBER', 'uint64'),
-#     ('fftlen', 'int32'),
-#     ('nfft2int', 'int32'),
-#     ('fftovlp', 'int32'),
-#     ('apodisation', 'int32'),
-#     ('nffte', 'int32'),
-#     ('nbchan', 'int32')
-#     ]
-# def idx_of(array, value, order='low'):
-#     """ Find the index of value in array.
+from nenupytf.other import idx_of, to_unix
 
-#         REDO THIS METHOD ITS TOOOOOO FUCKIN SLOW
-        
-#         Parameters
-#         ----------
-#         array : np.ndarray
-#             Array upon which to search for indices.
-#         value : float
-#             Value to find the index for.
-#         order : str
-#             Could be 'low' or 'high'.
-#             Let's say array[2] < value < array[3].
-#             If 'low', the result will be `2`.
-#             If 'high', the result will be `3`.
-#     """
-#     if not order in ['low', 'high']:
-#         raise ValueError(
-#             '`order` should only be low or high.'
-#             )
-#     diff = array - value
-#     if order == 'low':
-#         # If value lower than anything, return index 0
-#         if not np.any(array <= value):
-#             return 0
-#         # else, return the low value index
-#         else:
-#             return np.argwhere(
-#                 diff == diff[diff <= 0.].max()
-#                 )[0, 0]
-#     elif order == 'high':
-#         # If value greater than anything, return the last index
-#         if not np.any(array >= value):
-#             return array.size - 1
-#         # else, return the high index value
-#         else:
-#             return np.argwhere(
-#                 diff == diff[diff >= 0.].min()
-#                 )[0, 0]
 
 # l = Lane('SUN_TRACKING_20191011_100036_2.spectra')
 # d = l.select(time=['2019-10-11T10:00:55.0000000', '2019-10-11T10:01:05.0000000'], freq=[30, 32])
@@ -165,12 +114,17 @@ class Lane(object):
             ----------
             time : list
                 Length-2 list of time in ISO/ISOT.
+
+            Returns
+            -------
+            time : list
+                length-2 list of unix timestamps
         """
         return self._time
     @time.setter
     def time(self, t):
         if t is None:
-            t = [self._timestamps[0], self._timestamps[-1]]            
+            t = [self.time_min.unix, self.time_max.unix]            
         else:
             if not isinstance(t, (list, np.ndarray)):
                 raise TypeError(
@@ -182,11 +136,11 @@ class Lane(object):
                     )
             t0_unix = Time(t[0], precision=7).unix
             t1_unix = Time(t[1], precision=7).unix
-            if t0_unix < self._timestamps[0]:
+            if t0_unix < self.time_min.unix:
                 raise ValueError(
                     'Out of range time selection.'
                     )
-            if t1_unix > self._timestamps[-1]:
+            if t1_unix > self.time_max.unix:
                 raise ValueError(
                     'Out of range time selection.'
                     )
@@ -202,6 +156,11 @@ class Lane(object):
 
             Parameters
             ----------
+            freq : list
+                Length-2 list of frequencies
+
+            Returns
+            -------
             freq : list
                 Length-2 list of frequencies
         """
@@ -274,7 +233,8 @@ class Lane(object):
     def freq_max(self):
         """ Maximal observed frequency in MHz
         """
-        return np.max(self.frequencies)
+        df = (1.0 / 5.12e-6) * 1e-6
+        return np.max(self.frequencies) + df
 
 
     @property
@@ -282,11 +242,7 @@ class Lane(object):
         """ Minimal observed time.
             `astropy.Time` object
         """
-        return Time(
-            self._timestamps[0],
-            format='unix',
-            precision=7
-            )
+        return to_unix(self._timestamps[0])
 
 
     @property
@@ -294,11 +250,9 @@ class Lane(object):
         """ Maximal observed time.
             `astropy.Time` object
         """
-        return Time(
-            self._timestamps[-1],
-            format='unix',
-            precision=7
-            )
+        times_per_block = self.nffte * self.fftlen * self.nfft2int
+        sec_dt_block = 5.12e-6 * times_per_block
+        return to_unix(self._timestamps[-1] + sec_dt_block)
 
 
     def select(self, stokes='I', time=None, freq=None, beam=None):
@@ -324,7 +278,22 @@ class Lane(object):
             frequency=self.freq[1],
             order='high'
             )
-        return NenuStokes(
+
+        times = self._get_time(
+            id_min=tmin_idx,
+            id_max=tmax_idx + 1
+            )
+        t_mask = (times >= to_unix(self.time[0])) &\
+            (times <= to_unix(self.time[1]))
+        
+        freqs = self._get_freq(
+            id_min=fmin_idx,
+            id_max=fmax_idx + 1
+            )
+        f_mask = (freqs >= self.freq[0]) &\
+            (freqs <= self.freq[1])
+        
+        spectrum = NenuStokes(
             data=self.memdata['data'],
             stokes=stokes,
             nffte=self.nffte,
@@ -333,6 +302,12 @@ class Lane(object):
             tmin_idx:tmax_idx + 1,
             fmin_idx:fmax_idx + 1,
             ]
+
+        return (
+            times[t_mask],
+            freqs[f_mask],
+            spectrum[t_mask, :][:, f_mask]
+            )
 
 
     def _load(self):
@@ -430,6 +405,50 @@ class Lane(object):
             )
         idx += np.searchsorted(self._beams, self.beam)
         return idx
+
+
+    def _get_time(self, id_min, id_max):
+        """ Recover the time for a given block selection
+
+            Parameters
+            ----------
+            id_min : int
+                Index of starting time block
+            id_max : int
+                Index of ending time block
+
+            Returns
+            -------
+            time : `astropy.Time`
+                Time object array
+        """
+        n_times = (id_max - id_min) * self.nffte
+        t = np.arange(n_times, dtype='float64')
+        dt = t * 5.12e-6 * self.fftlen * self.nfft2int,
+        dt += self._timestamps[id_min]
+        return to_unix(np.squeeze(dt))
+
+
+    def _get_freq(self, id_min, id_max):
+        """ Recover the frequency for a given block selection
+
+            Parameters
+            ----------
+            id_min : int
+                Index of starting frequency block
+            id_max : int
+                Index of ending frequency block
+
+            Returns
+            -------
+            frequency : `np.ndarray`
+                Array of frequencies in MHz
+        """
+        n_freqs = (id_max - id_min) * self.fftlen
+        f = np.arange(n_freqs, dtype='float64')
+        f *= (1.0 / 5.12e-6 / self.fftlen) * 1e-6
+        f += self.frequencies[id_min]
+        return f
 # ============================================================= #
 
         
