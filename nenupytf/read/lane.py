@@ -23,10 +23,6 @@ from nenupytf.stokes import NenuStokes
 from nenupytf.other import idx_of, to_unix
 
 
-# l = Lane('SUN_TRACKING_20191011_100036_2.spectra')
-# d = l.select(time=['2019-10-11T10:00:55.0000000', '2019-10-11T10:01:05.0000000'], freq=[30, 32])
-
-
 # ============================================================= #
 # --------------------------- Lane ---------------------------- #
 # ============================================================= #
@@ -53,13 +49,11 @@ class Lane(object):
             Minimal observed frequency in MHz
         freq_max : float
             Maximal observed frequency in MHz
-        time_min
-        time_max
+        time_min : `astropy.time.Time`
+            Minimal observed time
+        time_max : `astropy.time.Time`
+            maximal observed time
 
-        TO CHECK... :
-        timestamp : int
-            Timestamp
-        blockseqnumber : int
         fftlen : int
             Number of frequencies within each channel
         nfft2int : int
@@ -81,6 +75,8 @@ class Lane(object):
         self.freq = None
 
 
+    # --------------------------------------------------------- #
+    # --------------------- Getter/Setter --------------------- #
     @property
     def sfile(self):
         return self._sfile
@@ -205,10 +201,14 @@ class Lane(object):
     def beam(self, b):
         if b is None:
             b = self._beams[0]
-        if not isinstance(b, np.integer):
+        if not isinstance(b, (int, np.integer)):
             raise TypeError(
                 '`beam` is expected to be an integer.'
                 ) 
+        if b not in self._beams:
+            raise ValueError(
+                'Out of range beam selection.'
+                )
         self._beam = b
         return
 
@@ -255,6 +255,8 @@ class Lane(object):
         return to_unix(self._timestamps[-1] + sec_dt_block)
 
 
+    # --------------------------------------------------------- #
+    # ------------------------ Methods ------------------------ #
     def select(self, stokes='I', time=None, freq=None, beam=None):
         """
         """
@@ -310,6 +312,8 @@ class Lane(object):
             )
 
 
+    # --------------------------------------------------------- #
+    # ----------------------- Internal ------------------------ #
     def _load(self):
         """ Open the .spectra file in memmap mode.
             Store it in the `memdata` attribute.
