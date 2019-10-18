@@ -79,10 +79,10 @@ class ObsRepo(object):
     @files.setter
     def files(self, f):
         self._files = f
-        if not (f is None):
-            self.spectra = np.array([
-                Lane(spectrum=fi) for fi in f
-                ])
+        # if not (f is None):
+        #     self.spectra = np.array([
+        #         Lane(spectrum=fi) for fi in f
+        #         ])
         return
     
 
@@ -91,7 +91,8 @@ class ObsRepo(object):
     def info(self):
         """ Display the informations regarding the observation
         """
-        for l, f, s in zip(self.lanes, self.files, self.spectra):
+        for l, f in zip(self.lanes, self.files):
+            s = Lane(spectrum=f)
             print('\n--------------- nenupytf ---------------')
             print('Info on {}'.format(f))
             print('Lane: {}'.format(l))
@@ -105,6 +106,7 @@ class ObsRepo(object):
                 ))
             print('Beams: {}'.format(np.unique(s._beams)))
             print('----------------------------------------\n')
+            del s
         return
 
 
