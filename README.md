@@ -39,7 +39,7 @@ Beams: [0]
 displaying for each lane, the time and frequency range as well as the beam indices.
 
 ### Selecting data
-To select data from a sprecific file:
+To select data from a specific file:
 ```python
 from nenupytf.read import Lane
 l = Lane('OBS_XXX_XXX_0.spectra')

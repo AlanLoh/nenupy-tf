@@ -16,6 +16,8 @@ __all__ = [
 
 from astropy.time import Time
 import os.path as path
+from os import getpid
+import psutil
 import numpy as np
 
 from nenupytf.other import header_struct, max_bsn
@@ -281,6 +283,11 @@ class Lane(object):
             order='high'
             )
 
+        self._check_memory(
+            nt=tmax_idx + 1 - tmin_idx,
+            nf=fmax_idx + 1 - fmin_idx
+            )
+
         times = self._get_time(
             id_min=tmin_idx,
             id_max=tmax_idx + 1
@@ -453,6 +460,25 @@ class Lane(object):
         f *= (1.0 / 5.12e-6 / self.fftlen) * 1e-6
         f += self.frequencies[id_min]
         return f
+
+
+    def _check_memory(self, nt, nf):
+        """ Check that the requested data selection does not
+            exceed the available memory. 
+        """
+        vm = psutil.virtual_memory()
+        mem_gb = vm.available / (1024**3)
+
+        n_elements = nt * self.nffte * nf * self.fftlen
+        fftn_size = n_elements * 4 * np.dtype(np.float32).itemsize
+        meta_size = n_elements * 3 * np.dtype(np.int32).itemsize
+        sel_gb = (fftn_size + meta_size) / (1024**3)
+
+        if sel_gb > mem_gb:
+            raise MemoryError(
+                'Try to reduce the selection range'
+                )
+        return
 # ============================================================= #
 
         
