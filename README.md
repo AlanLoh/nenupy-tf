@@ -43,6 +43,8 @@ To select data from a sprecific file:
 ```python
 from nenupytf.read import Lane
 l = Lane('OBS_XXX_XXX_0.spectra')
-t, f, d = l.select(time=['2019-10-13 07:25:50.4404020', '2019-10-13 07:25:54.4404020'], freq=[50, 54.97], beam=0)
+time_select = ['2019-10-13 07:25:50.4404020', '2019-10-13 07:25:54.4404020']
+freq_select = [50, 54.97]
+t, f, d = l.select(time=time_select, freq=freq_select, beam=0, stokes='I')
 ```
 The `select()` methods, returns 3 arrays, namely the time (in `astropy.time.Time` format), the frequency in MHz, and the Dynamic Spectrum (which is a 2D array).
