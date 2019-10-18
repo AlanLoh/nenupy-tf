@@ -24,6 +24,15 @@ setup(
     zip_safe = False
     )
 
+# make the package:
+# python3 setup.py sdist bdist_wheel
+# upload it:
+# python3 -m twine upload dist/*version*
+
+# Release:
+# git tag -a v*version* -m "annotation for this release"
+# git push origin --tags
+
 
 # Install on nancep
 # /usr/local/bin/pip3.5 install nenupytf --install-option=--prefix=/cep/lofar/nenupytf --upgrade

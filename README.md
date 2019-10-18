@@ -48,3 +48,9 @@ freq_select = [50, 54.97]
 t, f, d = l.select(time=time_select, freq=freq_select, beam=0, stokes='I')
 ```
 The `select()` methods, returns 3 arrays, namely the time (in `astropy.time.Time` format), the frequency in MHz, and the Dynamic Spectrum (which is a 2D array).
+
+### Command-line plot
+To display a quicklook of the selection, simply run:
+```
+nenupytf-plot --obs /path/to/observation_directory/ --lane 0 --time 2019-10-13T07:25:50.4404020 2019-10-13T07:25:54.4404020 --freq 50 54.97 --stokes I
+```
