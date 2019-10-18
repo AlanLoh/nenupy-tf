@@ -13,6 +13,9 @@ __all__ = [
     ]
 
 
+import numpy as np
+
+
 def idx_of(array, value, order='low'):
     """ Find the index of value in array.
         

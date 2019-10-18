@@ -21,6 +21,13 @@ __all__ = [
 import numpy as np
 
 from nenupytf.other import allowed_stokes
+# allowed_stokes = [
+#     'i',
+#     'q',
+#     'u',
+#     'v',
+#     'fracv'
+#     ]
 
 
 # ============================================================= #
@@ -62,12 +69,14 @@ class NenuStokes(object):
         return self._sel_slice
     @sel_slice.setter
     def sel_slice(self, s):
+        if s is None:
+            return
         if len(s) != 2:
             raise ValueError(
                 '2D slice expected.'
                 )
-        self.ntblocks = s[0][1] - s[0][0]
-        self.nfblocks = s[1][1] - s[1][0]
+        self.ntblocks = s[0].stop - s[0].start
+        self.nfblocks = s[1].stop - s[1].start
         self._sel_slice = s
         return
 
