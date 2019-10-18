@@ -53,6 +53,8 @@ class ObsRepo(object):
         self.repo = repo
 
 
+    # --------------------------------------------------------- #
+    # --------------------- Getter/Setter --------------------- #
     @property
     def repo(self):
         return self._repo
@@ -63,7 +65,7 @@ class ObsRepo(object):
                 'String expected.'
                 )
         self._repo = path.abspath(r)
-        if not isdir(self._repo):
+        if not path.isdir(self._repo):
             raise NotADirectoryError(
                 'Unable to locate {}'.format(self._repo)
                 )
@@ -84,10 +86,34 @@ class ObsRepo(object):
         return
     
 
+    # --------------------------------------------------------- #
+    # ------------------------ Methods ------------------------ #
+    def info(self):
+        """ Display the informations regarding the observation
+        """
+        for l, f, s in zip(self.lanes, self.files, self.spectra):
+            print('\n--------------- nenupytf ---------------')
+            print('Info on {}'.format(f))
+            print('Lane: {}'.format(l))
+            print('Time: {} -- {}'.format(
+                s.time_min.isot,
+                s.time_max.isot
+                ))
+            print('Frequency: {} -- {} MHz'.format(
+                s.freq_min,
+                s.freq_max
+                ))
+            print('Beams: {}'.format(np.unique(s._beams)))
+            print('----------------------------------------\n')
+        return
+
+
+    # --------------------------------------------------------- #
+    # ----------------------- Internal ------------------------ #
     def _find_spectra(self):
         """ Find all the .spectra files within the repo
         """
-        search = join(self._repo, '*.spectra')
+        search = path.join(self._repo, '*.spectra')
         self.files = np.array(glob(search))
         
         if self.spectra.size == 0:

@@ -11,10 +11,10 @@ __status__ = 'WIP'
 
 import argparse
 
-from nenupytf.read import Spectrum
+from nenupytf.read import ObsRepo
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-o',
@@ -26,5 +26,5 @@ if __name__ == 'main':
         )
     args = parser.parse_args()
 
-    spec = Spectrum(directory=args.obs)
-    spec.select()
+    spec = ObsRepo(repo=args.obs)
+    spec.info()

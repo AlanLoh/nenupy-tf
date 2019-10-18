@@ -14,7 +14,7 @@ import argparse
 from nenupytf.read import Spectrum
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-o',
