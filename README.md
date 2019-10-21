@@ -56,6 +56,22 @@ t, f, d = l.select(time=time_select, freq=freq_select, beam=0, stokes='I')
 ```
 The `select()` methods, returns 3 arrays, namely the time (in `astropy.time.Time` format), the frequency in MHz, and the Dynamic Spectrum (which is a 2D array).
 
+Averaging on time and frequency may allow to see a full picture of the data. However it may take some time to process!
+```python
+from nenupytf.read import Lane
+l = Lane('OBS_XXX_XXX_0.spectra')
+t, f, d = l.average()
+```
+Of course, one can specify every parameter such as in the `select()` method. Besides, `average()` accepts `df` and `dt`, respectively the time bin (in seconds) and the frequency bin (in MHz):
+```python
+from nenupytf.read import Lane
+l = Lane('OBS_XXX_XXX_0.spectra')
+time_select = ['2019-10-13 07:25:50.4404020', '2019-10-13 08:00:00.000']
+freq_select = [30, 60]
+t, f, d = l.average(df=2, dt=3, time=time_select, freq=freq_select, beam=0, stokes='I')
+```
+
+
 ### Command-line plot
 To display a quicklook of the selection, simply run:
 ```

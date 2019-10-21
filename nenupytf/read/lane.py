@@ -22,7 +22,7 @@ import numpy as np
 
 from nenupytf.other import header_struct, max_bsn
 from nenupytf.stokes import NenuStokes
-from nenupytf.other import idx_of, to_unix
+from nenupytf.other import idx_of, to_unix, rebin1d, ProgressBar
 
 
 # ============================================================= #
@@ -88,7 +88,7 @@ class Lane(object):
             self.time_max.isot
             )
         beam = 'beams={}'.format(
-            np.unique(s._beams)
+            np.unique(self._beams)
             )
         return lane + freq + time + beam
 
@@ -127,7 +127,7 @@ class Lane(object):
             Parameters
             ----------
             time : list
-                Length-2 list of time in ISO/ISOT.
+                Length-2 list of time in ISO/ISOT or unix.
 
             Returns
             -------
@@ -148,8 +148,15 @@ class Lane(object):
                 raise IndexError(
                     '`time` should be a length 2 array.'
                     )
-            t0_unix = Time(t[0], precision=7).unix
-            t1_unix = Time(t[1], precision=7).unix
+            
+            if isinstance(t[0], str) & isinstance(t[1], str):
+                t0_unix = Time(t[0], precision=7).unix
+                t1_unix = Time(t[1], precision=7).unix
+            else:
+                # Assume unix time
+                t0_unix = t[0]
+                t1_unix = t[1]
+
             if t0_unix < self.time_min.unix:
                 raise ValueError(
                     'Out of range time selection.'
@@ -335,10 +342,60 @@ class Lane(object):
             )
 
 
-    def average(self, stokes='I', time=None, freq=None, beam=None):
+    def average(self, stokes='I', time=None, freq=None, beam=None, dt=None, df=None):
+        """ Average a dynamic spectrum in time and frequency
+
+            Parameters
+            ----------
+            dt : float
+                Time steps in seconds
+            df : float
+                Frequency steps in MHz
         """
-        """
-        return 
+        self.beam = beam
+        self.time = time
+        self.freq = freq
+        time_min, time_max = self.time
+        freq_min, freq_max = self.freq
+        if dt is None:
+            dt = (time_max - time_min) / 1000
+        if df is None:
+            df = (freq_max - freq_min) / 500
+
+        # Prepare the final array
+        nt = int((time_max - time_min) // dt)
+        nf = int((freq_max - freq_min) // df)
+        available_memory = psutil.virtual_memory().available
+        avg_data_size = nt * nf * np.dtype(np.float32).itemsize
+        if avg_data_size > available_memory:
+            raise MemoryError(
+                'Try to increase dt and/or df'
+                )
+        averaged_data = np.zeros((nt, nf), dtype='float32')
+        averaged_time = np.zeros(nt)#, dtype='float32')
+        averaged_freq = np.zeros(nf)#, dtype='float32')
+       
+        # Loop over the time and seelct corresponding data
+        bar = ProgressBar(valmax=nt, title='Averaging spectra...')
+        for i in range(nt):
+            t, f, d = self.select(
+                stokes='I',
+                time=[time_min + i*dt, time_min + (i + 1)*dt],
+                freq=freq,
+                beam=beam
+                )
+            # Averaging data in time
+            d = np.squeeze(np.mean(d, axis=0))
+            averaged_time[i] = to_unix(np.mean(t.unix)).unix
+            # Averaging in frequency
+            d = rebin1d(d, nf)
+            if i == 0:
+                averaged_freq[:] = rebin1d(f, nf)
+            # Storing into final array
+            averaged_data[i, :] = d
+            bar.update()
+            
+        return averaged_time, averaged_freq, averaged_data
 
 
     # --------------------------------------------------------- #
