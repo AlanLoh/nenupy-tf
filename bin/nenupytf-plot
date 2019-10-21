@@ -88,7 +88,7 @@ if __name__ == '__main__':
         lanefile = obs.files[tuple([obs.lanes == args.lane])][0]
 
     l = Lane(spectrum=lanefile)
-    t, f, d = l.select(
+    t, f, d = l.average(
         time=args.time,
         freq=args.freq,
         stokes=args.stokes,

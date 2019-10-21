@@ -379,7 +379,7 @@ class Lane(object):
         bar = ProgressBar(valmax=nt, title='Averaging spectra...')
         for i in range(nt):
             t, f, d = self.select(
-                stokes='I',
+                stokes=stokes,
                 time=[time_min + i*dt, time_min + (i + 1)*dt],
                 freq=freq,
                 beam=beam
@@ -414,6 +414,8 @@ class Lane(object):
 
         for key in [h[0] for h in header_struct]:
             setattr(self, key.lower(), header[key])
+        self.dt = 5.12e-6 * self.fftlen * self.nfft2int
+        self.df = (1.0 / 5.12e-6 / self.fftlen) * 1e-6
 
         beamlet_struct = np.dtype(
             [('lane', 'int32'),
@@ -445,7 +447,10 @@ class Lane(object):
         """
         datacube = self.memdata['data']
         self._ntb, self._nfb = datacube['lane'].shape
-        self._timestamps = self.memdata['TIMESTAMP']
+        self._timestamps = np.array(self._ntb)
+        for i in range(self._ntb):
+            self._timestamps[i] = self.memdata['TIMESTAMP'][i] +\
+                self.memdata['BLOCKSEQNUMBER'][i]/max_bsn
         # We here assume that the same information
         # is repeated at each time block
         self._beams = datacube['beam'][0]
@@ -514,7 +519,7 @@ class Lane(object):
         """
         n_times = (id_max - id_min) * self.nffte
         t = np.arange(n_times, dtype='float64')
-        dt = t * 5.12e-6 * self.fftlen * self.nfft2int,
+        dt = t * self.dt,
         dt += self._timestamps[id_min]
         return to_unix(np.squeeze(dt))
 
@@ -536,7 +541,7 @@ class Lane(object):
         """
         n_freqs = (id_max - id_min) * self.fftlen
         f = np.arange(n_freqs, dtype='float64')
-        f *= (1.0 / 5.12e-6 / self.fftlen) * 1e-6
+        f *= self.df
         f += self.frequencies[id_min]
         return f
 
