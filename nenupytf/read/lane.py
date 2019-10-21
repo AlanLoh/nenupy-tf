@@ -77,6 +77,22 @@ class Lane(object):
         self.freq = None
 
 
+    def __str__(self):
+        lane = 'Lane {}: '.format(self.lane)
+        freq = 'freq=[{}, {}] MHz, '.format(
+            self.freq_min,
+            self.freq_max
+            )
+        time = 'time=[{}, {}], '.format(
+            self.time_min.isot,
+            self.time_max.isot
+            )
+        beam = 'beams={}'.format(
+            np.unique(s._beams)
+            )
+        return lane + freq + time + beam
+
+
     # --------------------------------------------------------- #
     # --------------------- Getter/Setter --------------------- #
     @property
@@ -317,6 +333,12 @@ class Lane(object):
             freqs[f_mask],
             spectrum[t_mask, :][:, f_mask]
             )
+
+
+    def average(self, stokes='I', time=None, freq=None, beam=None):
+        """
+        """
+        return 
 
 
     # --------------------------------------------------------- #
