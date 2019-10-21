@@ -118,7 +118,7 @@ class ObsRepo(object):
         search = path.join(self._repo, '*.spectra')
         self.files = np.array(glob(search))
         
-        if self.spectra.size == 0:
+        if self.files.size == 0:
             raise FileNotFoundError(
                 'No .spectra files found!'
                 )

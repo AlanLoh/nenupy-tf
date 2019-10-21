@@ -366,7 +366,7 @@ class Lane(object):
         """
         datacube = self.memdata['data']
         self._ntb, self._nfb = datacube['lane'].shape
-        self._timestamps = np.array(self.memdata['TIMESTAMP'])
+        self._timestamps = self.memdata['TIMESTAMP']
         # We here assume that the same information
         # is repeated at each time block
         self._beams = datacube['beam'][0]
@@ -474,7 +474,7 @@ class Lane(object):
         meta_size = n_elements * 3 * np.dtype(np.int32).itemsize
         sel_gb = (fftn_size + meta_size) / (1024**3)
 
-        if sel_gb > mem_gb:
+        if sel_gb > mem_gb * 0.9:
             raise MemoryError(
                 'Try to reduce the selection range'
                 )
