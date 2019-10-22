@@ -21,7 +21,7 @@ import psutil
 import numpy as np
 
 from nenupytf.other import header_struct, max_bsn
-from nenupytf.stokes import NenuStokes
+from nenupytf.stokes import NenuStokes, SpecData
 from nenupytf.other import idx_of, to_unix, rebin1d, ProgressBar
 
 
@@ -283,7 +283,38 @@ class Lane(object):
     # --------------------------------------------------------- #
     # ------------------------ Methods ------------------------ #
     def select(self, stokes='I', time=None, freq=None, beam=None):
-        """
+        """ Select data within a lane file.
+            If the selection appears to be too big regarding
+            available memory, an error should be raised.
+            However as rough estimate, try to avoid time range
+            of more than 15 min and/or frequency range of more
+            than 10 MHz...
+
+            Parameters
+            ----------
+            time : list
+                Length-2 list of time range (ISO or ISOT format)
+                e.g.:
+                `time=['2019-03-20T11:59:00.0', '2019-03-20T12:20:00.0']`
+                Default: `None` whole time range selection.
+            stokes : str
+                Stokes parameter required (I, Q, U, V, fracV)
+                Default: `'I'`
+            freq : list
+                Length-2 list of frequency range (in MHz)
+                e.g.:
+                `freq=[30, 35]`
+                Default: `None` whole frequency range selection.
+            beam : int
+                Beam index, refer to observation setup to see the
+                details of the different observed beams.
+                Default: `None` consider index 0.
+
+            Returns
+            -------
+            spec : `SpecData`
+                SpecData object containing the time, the frequency and the data
+
         """
         self.beam = beam
         self.time = time
@@ -335,10 +366,16 @@ class Lane(object):
             fmin_idx:fmax_idx + 1,
             ]
 
-        return (
-            times[t_mask],
-            freqs[f_mask],
-            spectrum[t_mask, :][:, f_mask]
+        # return (
+        #     times[t_mask],
+        #     freqs[f_mask],
+        #     spectrum[t_mask, :][:, f_mask]
+        #     )
+
+        return SpecData(
+            data=spectrum[t_mask, :][:, f_mask],
+            time=times[t_mask],
+            freq=freqs[f_mask]
             )
 
 
@@ -347,10 +384,32 @@ class Lane(object):
 
             Parameters
             ----------
+            time : list
+                Length-2 list of time range (ISO or ISOT format)
+                e.g.:
+                `time=['2019-03-20T11:59:00.0', '2019-03-20T12:20:00.0']`
+                Default: `None` whole time range selection.
+            stokes : str
+                Stokes parameter required (I, Q, U, V, fracV)
+                Default: `'I'`
+            freq : list
+                Length-2 list of frequency range (in MHz)
+                e.g.:
+                `freq=[30, 35]`
+                Default: `None` whole frequency range selection.
+            beam : int
+                Beam index, refer to observation setup to see the
+                details of the different observed beams.
+                Default: `None` consider index 0.
             dt : float
                 Time steps in seconds
             df : float
                 Frequency steps in MHz
+
+            Returns
+            -------
+            spec : `SpecData`
+                SpecData object containing the time, the frequency and the data
         """
         self.beam = beam
         self.time = time
@@ -378,24 +437,29 @@ class Lane(object):
         # Loop over the time and seelct corresponding data
         bar = ProgressBar(valmax=nt, title='Averaging spectra...')
         for i in range(nt):
-            t, f, d = self.select(
+            spec = self.select(
                 stokes=stokes,
                 time=[time_min + i*dt, time_min + (i + 1)*dt],
                 freq=freq,
                 beam=beam
                 )
             # Averaging data in time
-            d = np.squeeze(np.mean(d, axis=0))
-            averaged_time[i] = to_unix(np.mean(t.unix)).unix
+            d = np.squeeze(np.mean(spec.data, axis=0))
+            averaged_time[i] = to_unix(np.mean(spec.time.unix)).unix
             # Averaging in frequency
             d = rebin1d(d, nf)
             if i == 0:
-                averaged_freq[:] = rebin1d(f, nf)
+                averaged_freq[:] = rebin1d(spec.freq, nf)
             # Storing into final array
             averaged_data[i, :] = d
             bar.update()
             
-        return averaged_time, averaged_freq, averaged_data
+        # return averaged_time, averaged_freq, averaged_data
+        return SpecData(
+            data=averaged_data,
+            time=to_unix(averaged_time),
+            freq=averaged_freq
+            )
 
 
     # --------------------------------------------------------- #

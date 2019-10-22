@@ -88,7 +88,7 @@ if __name__ == '__main__':
         lanefile = obs.files[tuple([obs.lanes == args.lane])][0]
 
     l = Lane(spectrum=lanefile)
-    t, f, d = l.average(
+    spec = l.select(
         time=args.time,
         freq=args.freq,
         stokes=args.stokes,
@@ -96,11 +96,11 @@ if __name__ == '__main__':
         )
 
     pcm = plt.pcolormesh(
-        (t-t[0]).sec,
-        f,
-        d.T,
-        vmin=np.percentile(d, 5),
-        vmax=np.percentile(d, 95),
+        (spec.time-spec.time[0]).sec,
+        spec.freq,
+        spec.data.T,
+        vmin=np.percentile(spec.data, 5),
+        vmax=np.percentile(spec.data, 95),
         cmap='YlGnBu_r')
     cbar = plt.colorbar(pcm)
     cbar.set_label('Stokes {}'.format(args.stokes))

@@ -52,15 +52,15 @@ from nenupytf.read import Lane
 l = Lane('OBS_XXX_XXX_0.spectra')
 time_select = ['2019-10-13 07:25:50.4404020', '2019-10-13 07:25:54.4404020']
 freq_select = [50, 54.97]
-t, f, d = l.select(time=time_select, freq=freq_select, beam=0, stokes='I')
+spec = l.select(time=time_select, freq=freq_select, beam=0, stokes='I')
 ```
-The `select()` methods, returns 3 arrays, namely the time (in `astropy.time.Time` format), the frequency in MHz, and the Dynamic Spectrum (which is a 2D array).
+The `select()` methods, returns a `SpecData` object, storing the time (in `astropy.time.Time` format), the frequency in MHz, and the Dynamic Spectrum (which is a 2D array). Besides, a `SpecData` object enables several cleaning or analysis methods specific to dynamic spectra.
 
 Averaging on time and frequency may allow to see a full picture of the data. However it may take some time to process!
 ```python
 from nenupytf.read import Lane
 l = Lane('OBS_XXX_XXX_0.spectra')
-t, f, d = l.average()
+spec = l.average()
 ```
 Of course, one can specify every parameter such as in the `select()` method. Besides, `average()` accepts `df` and `dt`, respectively the time bin (in seconds) and the frequency bin (in MHz):
 ```python
@@ -73,7 +73,7 @@ t, f, d = l.average(df=2, dt=3, time=time_select, freq=freq_select, beam=0, stok
 
 
 ### Command-line plot
-To display a quicklook of the selection, simply run:
+To display a plot of the selection, simply run:
 ```
 nenupytf-plot --obs /path/to/observation_directory/ --lane 0 --time 2019-10-13T07:25:50.4404020 2019-10-13T07:25:54.4404020 --freq 50 54.97 --stokes I
 ```
