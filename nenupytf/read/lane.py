@@ -415,6 +415,7 @@ class Lane(object):
         for key in [h[0] for h in header_struct]:
             setattr(self, key.lower(), header[key])
         self.dt = 5.12e-6 * self.fftlen * self.nfft2int
+        self.block_dt = self.dt * self.nffte # sec
         self.df = (1.0 / 5.12e-6 / self.fftlen) * 1e-6
 
         beamlet_struct = np.dtype(
@@ -441,16 +442,15 @@ class Lane(object):
 
 
     def _parse_tf(self):
-        """ Once the file is open wia memmap, go through ir
+        """ Once the file is open wia memmap, go through it
             and store information for each time, frequency,
             beam index and lane index.
         """
         datacube = self.memdata['data']
         self._ntb, self._nfb = datacube['lane'].shape
-        self._timestamps = np.array(self._ntb)
-        for i in range(self._ntb):
-            self._timestamps[i] = self.memdata['TIMESTAMP'][i] +\
-                self.memdata['BLOCKSEQNUMBER'][i]/max_bsn
+        self._timestamps = np.arange(self._ntb, dtype='float64')
+        self._timestamps *= self.block_dt
+        self._timestamps += self.memdata['TIMESTAMP'][0]
         # We here assume that the same information
         # is repeated at each time block
         self._beams = datacube['beam'][0]
