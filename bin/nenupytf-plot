@@ -105,7 +105,7 @@ if __name__ == '__main__':
     cbar = plt.colorbar(pcm)
     cbar.set_label('Stokes {}'.format(args.stokes))
     plt.ylabel('Frequency (MHz)')
-    plt.xlabel('Time (sec since {})'.format(t[0].isot))
+    plt.xlabel('Time (sec since {})'.format(spec.time[0].isot))
     plt.show()
 # ============================================================= #
 
