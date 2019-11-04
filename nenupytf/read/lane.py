@@ -201,11 +201,11 @@ class Lane(object):
                     )
             if f[0] < self.freq_min:
                 raise ValueError(
-                    'Out of range time selection.'
+                    'Out of range freq selection.'
                     )
             if f[1] > self.freq_max:
                 raise ValueError(
-                    'Out of range time selection.'
+                    'Out of range freq selection.'
                     )
 
         self._freq = f
