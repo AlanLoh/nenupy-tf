@@ -64,6 +64,8 @@ def idx_of(array, value, order='low'):
 def to_unix(time):
     """
     """
+    if isinstance(time, str):
+        time = Time(time, precision=7).unix
     time = Time(time, format='unix', precision=7) 
     return time
 

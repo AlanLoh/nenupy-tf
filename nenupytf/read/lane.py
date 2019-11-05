@@ -9,8 +9,7 @@ __maintainer__ = 'Alan Loh'
 __email__ = 'alan.loh@obspm.fr'
 __status__ = 'Production'
 __all__ = [
-    'Lane',
-    'LaneSpectrum'
+    'Lane'
     ]
 
 
@@ -19,6 +18,7 @@ import os.path as path
 from os import getpid
 import psutil
 import numpy as np
+import warnings
 
 from nenupytf.other import header_struct, max_bsn
 from nenupytf.stokes import NenuStokes, SpecData
@@ -158,13 +158,15 @@ class Lane(object):
                 t1_unix = t[1]
 
             if t0_unix < self.time_min.unix:
-                raise ValueError(
-                    'Out of range time selection.'
-                    )
+                warnings.warn(
+                    'Out of range time selection, default values adopted.'
+                )
+                t0_unix = self.time_min.unix
             if t1_unix > self.time_max.unix:
-                raise ValueError(
-                    'Out of range time selection.'
-                    )
+                warnings.warn(
+                    'Out of range time selection, default values adopted.'
+                )
+                t1_unix = self.time_max.unix
             t = [t0_unix, t1_unix]
 
         self._time = t
@@ -200,13 +202,15 @@ class Lane(object):
                     '`freq` should be a length 2 array.'
                     )
             if f[0] < self.freq_min:
-                raise ValueError(
-                    'Out of range freq selection.'
-                    )
+                warnings.warn(
+                    'Out of range freq selection, default values adopted.'
+                )
+                f[0] = self.freq_min
             if f[1] > self.freq_max:
-                raise ValueError(
-                    'Out of range freq selection.'
-                    )
+                warnings.warn(
+                    'Out of range freq selection, default values adopted.'
+                )
+                f[1] = self.freq_max
 
         self._freq = f
         return
@@ -628,18 +632,5 @@ class Lane(object):
                 )
         return
 # ============================================================= #
-
-        
-# ============================================================= #
-# ----------------------- LaneSpectrum ------------------------ #
-# ============================================================= #
-class LaneSpectrum(Lane):
-    """
-    """
-
-    def __init__(self, spectrum):
-        super().__init__(spectrum=spectrum)
-# ============================================================= #
-
 
 

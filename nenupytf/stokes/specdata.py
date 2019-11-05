@@ -34,6 +34,28 @@ class SpecData(object):
         return self.data.__repr__()
 
 
+    def __add__(self, other):
+        """ Concatenate two SpecData object in frequency
+        """
+        if not isinstance(other, SpecData):
+            raise TypeError(
+                'Trying to concatenate something else than SpecData'
+                )
+        if self.freq.max() < other.freq.min():
+            new_data = np.hstack((self.data, other.data))
+            new_time = self.time
+            new_freq = np.concatenate((self.freq, other.freq))
+        else:
+            new_data = np.hstack((other.data, self.data))
+            new_time = self.time
+            new_freq = np.concatenate((other.freq, self.freq))
+        return SpecData(
+            data=new_data,
+            time=new_time,
+            freq=new_freq
+            )
+
+
     # --------------------------------------------------------- #
     # --------------------- Getter/Setter --------------------- #
     @property

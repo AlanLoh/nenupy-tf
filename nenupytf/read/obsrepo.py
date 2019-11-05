@@ -47,6 +47,7 @@ class ObsRepo(object):
     """
 
     def __init__(self, repo):
+        self.desc = {}
         self.spectra = None
         self.lanes = None
         self.files = None
@@ -79,34 +80,89 @@ class ObsRepo(object):
     @files.setter
     def files(self, f):
         self._files = f
-        # if not (f is None):
-        #     self.spectra = np.array([
-        #         Lane(spectrum=fi) for fi in f
-        #         ])
+        return
+
+
+    @property
+    def lanes(self):
+        return self._lanes
+    @lanes.setter
+    def lanes(self, l):
+        self._lanes = l
+        if l is None:
+            return
+        for la, fi in zip(l, self.files):
+            s = Lane(spectrum=fi)
+            self.desc[str(la)] = {
+                'tmin': s.time_min,
+                'tmax': s.time_max,
+                'fmin': s.freq_min,
+                'fmax': s.freq_max,
+                'beam': np.unique(s._beams),
+                'file': fi
+            }
+            del s
         return
     
+
+    @property
+    def desctab(self):
+        """ Numpy array of description,
+            usefull for masking purposes...
+        """
+        max_len = 0
+        desc_list = []
+        for k, v in self.desc.items():
+            if len(v['file']) > max_len:
+                max_len = len(v['file'])
+            for b in v['beam']:
+                desc_list.append(
+                    (
+                        int(k),
+                        b,
+                        v['tmin'].unix,
+                        v['tmax'].unix,
+                        v['fmin'],
+                        v['fmax'],
+                        v['file'])
+                )
+
+        dtype = [
+            ('lane', 'u4'),
+            ('beam', 'u4'),
+            ('tmin', 'f8'),
+            ('tmax', 'f8'),
+            ('fmin', 'f8'),
+            ('fmax', 'f8'),
+            ('file', 'U{}'.format(max_len))
+            ]
+
+        d = np.array(
+            desc_list,
+            dtype=dtype
+        )
+        return d
+
 
     # --------------------------------------------------------- #
     # ------------------------ Methods ------------------------ #
     def info(self):
         """ Display the informations regarding the observation
         """
-        for l, f in zip(self.lanes, self.files):
-            s = Lane(spectrum=f)
+        for l, desc in self.desc.items():
             print('\n--------------- nenupytf ---------------')
-            print('Info on {}'.format(f))
+            print('Info on {}'.format(desc['file']))
             print('Lane: {}'.format(l))
             print('Time: {} -- {}'.format(
-                s.time_min.isot,
-                s.time_max.isot
+                desc['tmin'].isot,
+                desc['tmax'].isot
                 ))
             print('Frequency: {} -- {} MHz'.format(
-                s.freq_min,
-                s.freq_max
+                desc['fmin'],
+                desc['fmax']
                 ))
-            print('Beams: {}'.format(np.unique(s._beams)))
+            print('Beams: {}'.format(desc['beam']))
             print('----------------------------------------\n')
-            del s
         return
 
 
@@ -127,7 +183,8 @@ class ObsRepo(object):
             int(
                 f.split('_')[-1].replace('.spectra', '')
                 ) for f in self.files
-            ])
+            ],
+            dtype=int)
         
         return
 # ============================================================= #
