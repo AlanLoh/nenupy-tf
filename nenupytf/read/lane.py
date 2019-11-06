@@ -379,7 +379,8 @@ class Lane(object):
         return SpecData(
             data=spectrum[t_mask, :][:, f_mask],
             time=times[t_mask],
-            freq=freqs[f_mask]
+            freq=freqs[f_mask],
+            stokes=stokes
             )
 
 
@@ -462,7 +463,8 @@ class Lane(object):
         return SpecData(
             data=averaged_data,
             time=to_unix(averaged_time),
-            freq=averaged_freq
+            freq=averaged_freq,
+            stokes=stokes
             )
 
 

@@ -10,10 +10,8 @@ __status__ = 'WIP'
 
 
 import argparse
-import matplotlib.pyplot as plt
-import numpy as np
-
-from nenupytf.read import ObsRepo, Lane
+from nenupytf.read import Spectrum
+from nenupytf.display import plot, plotdb
 
 
 # ============================================================= #
@@ -29,14 +27,6 @@ if __name__ == '__main__':
         type=str,
         default='/.',
         help='Observation directory',
-        required=False
-        )
-    parser.add_argument(
-        '-l',
-        '--lane',
-        type=int,
-        default=0,
-        help='Lane selected',
         required=False
         )
     parser.add_argument(
@@ -73,39 +63,131 @@ if __name__ == '__main__':
         required=False,
         nargs='+'
         )
+    parser.add_argument(
+        '-n',
+        '--norm',
+        type=str,
+        default='lin',
+        help='Normalization (lin/log)',
+        required=False,
+        )
 
     args = parser.parse_args()
 
 
     # --------------------------------------------------------- #
     # ------------------------- Plot -------------------------- #
-    obs = ObsRepo(repo=args.obs)
-    if not args.lane in obs.lanes:
-        raise ValueError(
-            'No such lane.'
-            )
-    else:
-        lanefile = obs.files[tuple([obs.lanes == args.lane])][0]
-
-    l = Lane(spectrum=lanefile)
-    spec = l.select(
-        time=args.time,
-        freq=args.freq,
+    s = Spectrum(args.obs)
+    spec = s.select(
         stokes=args.stokes,
+        freq=args.freq,
+        time=args.time,
         beam=args.beam
-        )
+    )
 
-    pcm = plt.pcolormesh(
-        (spec.time-spec.time[0]).sec,
-        spec.freq,
-        spec.data.T,
-        vmin=np.percentile(spec.data, 5),
-        vmax=np.percentile(spec.data, 95),
-        cmap='YlGnBu_r')
-    cbar = plt.colorbar(pcm)
-    cbar.set_label('Stokes {}'.format(args.stokes))
-    plt.ylabel('Frequency (MHz)')
-    plt.xlabel('Time (sec since {})'.format(spec.time[0].isot))
-    plt.show()
-# ============================================================= #
+    if args.norm == 'log':
+        plotdb(spec)
+    else:
+        plot(spec)
+    
+
+# import argparse
+# import matplotlib.pyplot as plt
+# import numpy as np
+
+# from nenupytf.read import ObsRepo, Lane
+
+
+# # ============================================================= #
+# # ============================================================= #
+# if __name__ == '__main__':
+#     # --------------------------------------------------------- #
+#     # -------------------- Parse Arguments -------------------- #
+#     parser = argparse.ArgumentParser()
+    
+#     parser.add_argument(
+#         '-o',
+#         '--obs',
+#         type=str,
+#         default='/.',
+#         help='Observation directory',
+#         required=False
+#         )
+#     parser.add_argument(
+#         '-l',
+#         '--lane',
+#         type=int,
+#         default=0,
+#         help='Lane selected',
+#         required=False
+#         )
+#     parser.add_argument(
+#         '-b',
+#         '--beam',
+#         type=int,
+#         default=0,
+#         help='Beam selected',
+#         required=False
+#         )
+#     parser.add_argument(
+#         '-s',
+#         '--stokes',
+#         type=str,
+#         default='I',
+#         help='Stokes parameter (I, Q, U, V)',
+#         required=False
+#         )
+#     parser.add_argument(
+#         '-f',
+#         '--freq',
+#         type=float,
+#         default=None,
+#         help='Frequency range in MHz (put two space-separated values)',
+#         required=False,
+#         nargs='+'
+#         )
+#     parser.add_argument(
+#         '-t',
+#         '--time',
+#         type=str,
+#         default=None,
+#         help='Time range in ISOT (put two space-separated values)',
+#         required=False,
+#         nargs='+'
+#         )
+
+#     args = parser.parse_args()
+
+
+#     # --------------------------------------------------------- #
+#     # ------------------------- Plot -------------------------- #
+#     obs = ObsRepo(repo=args.obs)
+#     if not args.lane in obs.lanes:
+#         raise ValueError(
+#             'No such lane.'
+#             )
+#     else:
+#         lanefile = obs.files[tuple([obs.lanes == args.lane])][0]
+
+#     l = Lane(spectrum=lanefile)
+#     spec = l.select(
+#         time=args.time,
+#         freq=args.freq,
+#         stokes=args.stokes,
+#         beam=args.beam
+#         )
+
+#     pcm = plt.pcolormesh(
+#         (spec.time-spec.time[0]).sec,
+#         spec.freq,
+#         spec.data.T,
+#         vmin=np.percentile(spec.data, 5),
+#         vmax=np.percentile(spec.data, 95),
+#         cmap='YlGnBu_r')
+#     cbar = plt.colorbar(pcm)
+#     cbar.set_label('Stokes {}'.format(args.stokes))
+#     plt.ylabel('Frequency (MHz)')
+#     plt.xlabel('Time (sec since {})'.format(spec.time[0].isot))
+#     plt.show()
+# # ============================================================= #
 

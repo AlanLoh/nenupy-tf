@@ -24,10 +24,11 @@ class SpecData(object):
     """ A class to handle dynamic spectrum data
     """
 
-    def __init__(self, data, time, freq):
+    def __init__(self, data, time, freq, **kwargs):
         self.time = time
         self.freq = freq
         self.data = data
+        self.meta = kwargs
 
 
     def __repr__(self):
@@ -41,6 +42,12 @@ class SpecData(object):
             raise TypeError(
                 'Trying to concatenate something else than SpecData'
                 )
+        if 'stokes' in self.meta.keys():
+            if self.meta['stokes'] != other.meta['stokes']:
+                raise ValueError(
+                    'Inconsistent Stokes parameters'
+                    )
+
         if self.freq.max() < other.freq.min():
             new_data = np.hstack((self.data, other.data))
             new_time = self.time
@@ -49,10 +56,12 @@ class SpecData(object):
             new_data = np.hstack((other.data, self.data))
             new_time = self.time
             new_freq = np.concatenate((other.freq, self.freq))
+        
         return SpecData(
             data=new_data,
             time=new_time,
-            freq=new_freq
+            freq=new_freq,
+            stokes=self.meta['stokes']
             )
 
 

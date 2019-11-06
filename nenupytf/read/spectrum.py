@@ -94,18 +94,78 @@ class Spectrum(ObsRepo):
     # --------------------------------------------------------- #
     # ------------------------ Methods ------------------------ #
     def select(self, stokes='I', **kwargs):
-        """
+        """ Select among the data stored in the directory according
+            to a time range, a frequency range and a beam index
+            and return them converted in the chosen Stokes parameter.
+            NenuFAR-TF data can be spread over several lane files.
+            This will select the data nonetheless and concatenate
+            what is needed to ouptut a single `SpecData` object.
+
+            This may be usefull to call for `.info()` method prior
+            to select the data in order to know the time and 
+            frequency boundaries of the observation as well as 
+            recorded beam indices.
+
+            Parameters
+            ----------
+            stokes : {'I', 'Q', 'U', 'V', 'fracV'}, optional, default: 'I'
+                Stokes parameter value to convert raw data to.
+
+            Other Parameters
+            ----------------
+            **kwargs
+                Data selection can be applied on three parameters,
+                namely `freq`, `time` and `beam`.
+                - freq : list, optional, default: [fmin, fmax]
+                    Frequency range in MHz passed as a lenght-2
+                    list.
+                - time : list, optional, default: [tmin, tmax]
+                    Time range in ISOT or ISO format passed as
+                    a length-2 list.
+                - beam : int, optional, default: 0
+                    Beam index.
+
+            Returns
+            -------
+            spec : `~.stokes.SpecData`
+                The selected data are returned via a `SpecData`
+                instance, with a set of methods and attributes
+                to easily get times and amplitudes in various
+                units as well as some basic dynamic spectrum
+                analysis tools.
+
+            Examples
+            --------
+            ::
+                # Load the module
+                from nenupytf.read import Spectrum
+                
+                # Creates an instance for the observation stored
+                # in a given repository  
+                s = Spectrum('/path/to/observation/')
+                
+                # Display main informations
+                s.info()
+
+                # Data selection
+                spec = s.select(
+                    freq=[35, 40],
+                    time=['2019-11-04T12:15:55.0000000', '2019-11-04T12:15:57.0000000'], 
+                    beam=0
+                )
+
+                # Plot the data
+                from nenupytf.display import plotdb
+                plotdb(spec)
+
         """
         self._parameters(**kwargs)
+
         mask = self._bmask * self._fmask * self._tmask
+
         for f in self.desctab[mask]['file']:
             l = Lane(f)
-            # spec = l.select(
-            #         stokes=stokes,
-            #         time=[to_unix(t).isot for t in self.time],
-            #         freq=self.freq,
-            #         beam=self.beam
-            # )
+            
             if not 'spec' in locals():
                 spec = l.select(
                     stokes=stokes,
@@ -113,13 +173,19 @@ class Spectrum(ObsRepo):
                     freq=self.freq,
                     beam=self.beam
                 )
+            
             else:
+                # We assume here that the time is the same,
+                # only frequency is spread over different lanes.
+                # This will concatenate spectra from different
+                # lanes:
                 spec += l.select(
                     stokes=stokes,
                     time=[to_unix(t).isot for t in self.time],
                     freq=self.freq,
                     beam=self.beam
                 )
+            
             del l
         return spec
 
