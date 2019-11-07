@@ -80,12 +80,12 @@ class SpecData(object):
 
         if self.time.max() < other.time.min():
             new_data = np.hstack((self.data, other.data))
-            new_time = np.concatenate((self.time, other.time))
+            new_time = Time(np.concatenate((self.time, other.time)))
             new_freq = self.freq
         else:
             new_data = np.hstack((other.data, self.data))
-            new_time = self.time
-            new_freq = np.concatenate((other.freq, self.freq))
+            new_time = Time(np.concatenate((self.time, other.time)))
+            new_freq = self.freq
         
         return SpecData(
             data=new_data,
@@ -301,7 +301,7 @@ class SpecData(object):
             else np.median(self.data[tmask, :], axis=0)
         return SpecData(
             data=np.expand_dims(average, axis=0),
-            time=tmasked[0] + dt/2.,
+            time=Time(np.array([tmasked[0] + dt/2.])),
             freq=self.freq.copy(),
             stokes=self.meta['stokes']
             )

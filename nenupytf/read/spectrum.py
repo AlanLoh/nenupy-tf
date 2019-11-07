@@ -14,7 +14,7 @@ __all__ = [
 
 
 from nenupytf.read import ObsRepo, Lane
-from nenupytf.other import to_unix
+from nenupytf.other import to_unix, ProgressBar
 
 
 # ============================================================= #
@@ -190,10 +190,60 @@ class Spectrum(ObsRepo):
         return spec
 
 
-    def average(self):
+    def average(self, stokes='I', df=1, dt=1, **kwargs):
         """
+            Parameters
+            ----------
+            stokes : {'I', 'Q', 'U', 'V', 'fracV'}, optional, default: 'I'
+                Stokes parameter value to convert raw data to.
+            df : float
+                Frequency step in MHz on which average.
+            dt : float
+                Time step in seconds on which average.
+
+            Other Parameters
+            ----------------
+            **kwargs
+                Data selection can be applied on three parameters,
+                namely `freq`, `time` and `beam`.
+                - freq : list, optional, default: [fmin, fmax]
+                    Frequency range in MHz passed as a lenght-2
+                    list.
+                - time : list, optional, default: [tmin, tmax]
+                    Time range in ISOT or ISO format passed as
+                    a length-2 list.
+                - beam : int, optional, default: 0
+                    Beam index.
         """
-        return
+        self._parameters(**kwargs)
+
+        # Keep track of inputs parameters
+        beam = self.beam.copy()
+        freq = self.freq.copy()
+        time = self.time.copy()
+        
+        start, stop = time
+        bar = ProgressBar(
+            valmax=(stop-start)/dt,
+            title='Averaging...')
+        while start <= stop:
+            if not 'spec' in locals():
+                spec = self.select(
+                    stokes=stokes,
+                    time=[start, start+dt],
+                    freq=freq,
+                    beam=beam
+                ).tmean()
+            else:
+                spec = spec | self.select(
+                    stokes=stokes,
+                    time=[start, start+dt],
+                    freq=freq,
+                    beam=beam
+                ).tmean()
+            start += dt
+            bar.update()
+        return spec
 
 
     # --------------------------------------------------------- #
