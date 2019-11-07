@@ -167,6 +167,10 @@ class Lane(object):
                     'Out of range time selection, default values adopted.'
                 )
                 t1_unix = self.time_max.unix
+            if t1_unix < t0_unix:
+                raise ValueError(
+                    'Stop time < Start time'
+                )
             t = [t0_unix, t1_unix]
 
         self._time = t
@@ -211,6 +215,10 @@ class Lane(object):
                     'Out of range freq selection, default values adopted.'
                 )
                 f[1] = self.freq_max
+            if f[1] < f[0]:
+                raise ValueError(
+                    'Max freq < Min freq'
+                )
 
         self._freq = f
         return
@@ -609,10 +617,14 @@ class Lane(object):
             frequency : `np.ndarray`
                 Array of frequencies in MHz
         """
+        beam_shift = np.searchsorted(self._beams, self.beam)
+        id_max -= beam_shift
+        id_min -= beam_shift
         n_freqs = (id_max - id_min) * self.fftlen
         f = np.arange(n_freqs, dtype='float64')
         f *= self.df
-        f += self.frequencies[id_min]
+        #f += self.frequencies[id_min]
+        f += np.repeat(self.frequencies[id_min:id_max], self.fftlen)
         return f
 
 

@@ -35,7 +35,7 @@ class SpecData(object):
         return self.data.__repr__()
 
 
-    def __add__(self, other):
+    def __and__(self, other):
         """ Concatenate two SpecData object in frequency
         """
         if not isinstance(other, SpecData):
@@ -61,6 +61,58 @@ class SpecData(object):
             data=new_data,
             time=new_time,
             freq=new_freq,
+            stokes=self.meta['stokes']
+            )
+
+
+    def __add__(self, other):
+        """ Add two SpecData
+        """
+        self._check_conformity(other)
+
+        return SpecData(
+            data=self.amp + other.amp,
+            time=self.time,
+            freq=self.freq,
+            stokes=self.meta['stokes']
+            )
+
+
+    def __sub__(self, other):
+        """ Subtract two SpecData
+        """
+        self._check_conformity(other)
+
+        return SpecData(
+            data=self.amp + other.amp,
+            time=self.time,
+            freq=self.freq,
+            stokes=self.meta['stokes']
+            )
+
+
+    def __mul__(self, other):
+        """ Multiply two SpecData
+        """
+        self._check_conformity(other)
+
+        return SpecData(
+            data=self.amp * other.amp,
+            time=self.time,
+            freq=self.freq,
+            stokes=self.meta['stokes']
+            )
+
+
+    def __truediv__(self, other):
+        """ Divide two SpecData
+        """
+        self._check_conformity(other)
+
+        return SpecData(
+            data=self.amp / other.amp,
+            time=self.time,
+            freq=self.freq,
             stokes=self.meta['stokes']
             )
 
@@ -172,18 +224,19 @@ class SpecData(object):
             # Rescale everything not to bias the mean
             data = tf - (np.median(tf, axis=0) - np.median(tf))
 
-        average = np.mean(data, axis=2)\
+        average = np.mean(data, axis=1)\
             if method == 'mean'\
-            else np.median(data, axis=2)
+            else np.median(data, axis=1)
 
         return SpecData(
             data=np.expand_dims(average, axis=1),
             time=self.time.copy(),
-            freq=np.expand_dims(np.mean(self.freq[fmask]), axis=0)
+            freq=np.expand_dims(np.mean(self.freq[fmask]), axis=0),
+            stokes=self.meta['stokes']
             )
 
 
-    def tmean(self, t1=None, t2=None):
+    def tmean(self, t1=None, t2=None, method='mean',):
         """ Average over the time.
             
             Parameters
@@ -212,11 +265,29 @@ class SpecData(object):
         tmask = (self.time >= t1) & (self.time <= t2)
         tmasked = self.time[tmask]
         dt = (tmasked[-1] - tmasked[0])
-        mean = np.mean(self.data[tmask, :, :], axis=0)
+        average = np.mean(self.data[tmask, :], axis=0)\
+            if method == 'mean'\
+            else np.median(self.data[tmask, :], axis=0)
         return SpecData(
-            data=np.expand_dims(mean, axis=0),
-            time=np.array([tmasked[0] + dt/2.]),
-            freq=self.freq.copy()
+            data=np.expand_dims(average, axis=0),
+            time=tmasked[0] + dt/2.,
+            freq=self.freq.copy(),
+            stokes=self.meta['stokes']
+            )
+
+
+    def background(self):
+        """ Compute the median background
+        """
+        specf = self.fmean(method='median')
+        spect = self.tmean(method='median')
+        bkg = np.ones(self.amp.shape)
+        bkg *= specf.amp[:, np.newaxis] * spect.amp[np.newaxis, :]
+        return SpecData(
+            data=bkg,
+            time=self.time.copy(),
+            freq=self.freq.copy(),
+            stokes=self.meta['stokes']
             )
 
 
@@ -247,7 +318,19 @@ class SpecData(object):
             )
 
 
-    def bg_remove(self, kernel=11, sigma=3):
+    def bg_remove(self):
+        """
+        """
+        bg = self.background()
+        return SpecData(
+            data=self.amp,
+            time=self.time,
+            freq=self.freq,
+            stokes=self.meta['stokes']
+            ) / bg
+
+
+    def bg_remove_v0(self, kernel=11, sigma=3):
         """ Remove the background
 
             Parameters
@@ -277,6 +360,40 @@ class SpecData(object):
             time=self.time.copy(),
             freq=self.freq.copy(),
             polar=self.polar.copy())
+
+
+    # --------------------------------------------------------- #
+    # ----------------------- Internal ------------------------ #
+    def _check_conformity(self, other):
+        """ Checks that other if of same type, same time, 
+            frequency ans Stokes parameters than self
+        """
+        if not isinstance(other, SpecData):
+            raise TypeError(
+                'Not a SpecData'
+                )
+
+        if self.meta['stokes'] != other.meta['stokes']:
+            raise ValueError(
+                'Different Stokes parameters'
+                )
+
+        if self.amp.shape != other.amp.shape:
+            raise ValueError(
+                'SpecData objects do not have the same dimensions'
+                )
+
+        if self.time != other.time:
+            raise ValueError(
+                'Not the same times'
+                )
+
+        if self.freq != other.freq:
+            raise ValueError(
+                'Not the same frequencies'
+                )
+
+        return
 # ============================================================= #
 
 

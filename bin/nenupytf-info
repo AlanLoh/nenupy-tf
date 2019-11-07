@@ -20,7 +20,7 @@ if __name__ == '__main__':
         '-o',
         '--obs',
         type=str,
-        default='/.',
+        default='.',
         help='Observation directory',
         required=False
         )

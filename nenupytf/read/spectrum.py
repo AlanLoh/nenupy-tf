@@ -179,7 +179,7 @@ class Spectrum(ObsRepo):
                 # only frequency is spread over different lanes.
                 # This will concatenate spectra from different
                 # lanes:
-                spec += l.select(
+                spec = spec & l.select(
                     stokes=stokes,
                     time=[to_unix(t).isot for t in self.time],
                     freq=self.freq,

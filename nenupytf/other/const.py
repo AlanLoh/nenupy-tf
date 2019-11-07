@@ -11,7 +11,8 @@ __status__ = 'Production'
 __all__ = [
     'max_bsn',
     'allowed_stokes',
-    'header_struct'
+    'header_struct',
+    'bst_exts'
     ]
 
 
@@ -38,4 +39,14 @@ header_struct = [
     ('apodisation', 'int32'),
     ('nffte', 'int32'),
     ('nbchan', 'int32')
+    ]
+
+# BST extensions, name and HDU index
+bst_exts = [
+        ('intsr', 1),
+        ('obs', 2),
+        ('anabeam', 3),
+        ('beam', 4),
+        ('pointing_ab', 5),
+        ('pointing_b', 6)
     ]
