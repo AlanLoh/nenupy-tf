@@ -620,10 +620,8 @@ class Lane(object):
         beam_shift = np.searchsorted(self._beams, self.beam)
         id_max -= beam_shift
         id_min -= beam_shift
-        n_freqs = (id_max - id_min) * self.fftlen
-        f = np.arange(n_freqs, dtype='float64')
+        f = np.tile(np.arange(self.fftlen, dtype='float64'), (id_max - id_min))
         f *= self.df
-        #f += self.frequencies[id_min]
         f += np.repeat(self.frequencies[id_min:id_max], self.fftlen)
         return f
 

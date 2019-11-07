@@ -190,6 +190,14 @@ class Spectrum(ObsRepo):
         return spec
 
 
+    def average(self):
+        """
+        """
+        return
+
+
+    # --------------------------------------------------------- #
+    # ----------------------- Internal ------------------------ #
     def _parameters(self, **kwargs):
         """ Read the selection parameters
         """

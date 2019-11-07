@@ -65,6 +65,37 @@ class SpecData(object):
             )
 
 
+    def __or__(self, other):
+        """ Concatenate two SpecData in time
+        """
+        if not isinstance(other, SpecData):
+            raise TypeError(
+                'Trying to concatenate something else than SpecData'
+                )
+        if 'stokes' in self.meta.keys():
+            if self.meta['stokes'] != other.meta['stokes']:
+                raise ValueError(
+                    'Inconsistent Stokes parameters'
+                    )
+
+        if self.time.max() < other.time.min():
+            new_data = np.hstack((self.data, other.data))
+            new_time = np.concatenate((self.time, other.time))
+            new_freq = self.freq
+        else:
+            new_data = np.hstack((other.data, self.data))
+            new_time = self.time
+            new_freq = np.concatenate((other.freq, self.freq))
+        
+        return SpecData(
+            data=new_data,
+            time=new_time,
+            freq=new_freq,
+            stokes=self.meta['stokes']
+            )
+
+
+
     def __add__(self, other):
         """ Add two SpecData
         """
@@ -84,7 +115,7 @@ class SpecData(object):
         self._check_conformity(other)
 
         return SpecData(
-            data=self.amp + other.amp,
+            data=self.amp - other.amp,
             time=self.time,
             freq=self.freq,
             stokes=self.meta['stokes']
