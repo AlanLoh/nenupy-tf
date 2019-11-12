@@ -3,4 +3,5 @@
 
 
 from .fits_conversion import *
+from .analysis import *
 

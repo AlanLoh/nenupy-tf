@@ -173,7 +173,7 @@ class Spectrum(ObsRepo):
                     freq=self.freq,
                     beam=self.beam
                 )
-            
+
             else:
                 # We assume here that the time is the same,
                 # only frequency is spread over different lanes.
@@ -185,7 +185,7 @@ class Spectrum(ObsRepo):
                     freq=self.freq,
                     beam=self.beam
                 )
-            
+
             del l
         return spec
 
@@ -218,11 +218,13 @@ class Spectrum(ObsRepo):
         self._parameters(**kwargs)
 
         # Keep track of inputs parameters
-        beam = self.beam.copy()
+        beam = self.beam
         freq = self.freq.copy()
         time = self.time.copy()
         
         start, stop = time
+        # fbins = 
+
         bar = ProgressBar(
             valmax=(stop-start)/dt,
             title='Averaging...')
@@ -233,14 +235,14 @@ class Spectrum(ObsRepo):
                     time=[start, start+dt],
                     freq=freq,
                     beam=beam
-                ).tmean()
+                ).tmean().frebin((freq[1]-freq[0])/df)
             else:
                 spec = spec | self.select(
                     stokes=stokes,
                     time=[start, start+dt],
                     freq=freq,
                     beam=beam
-                ).tmean()
+                ).tmean().frebin((freq[1]-freq[0])/df)
             start += dt
             bar.update()
         return spec

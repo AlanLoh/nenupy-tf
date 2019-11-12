@@ -267,6 +267,26 @@ class SpecData(object):
             )
 
 
+    def frebin(self, bins):
+        """
+        """
+        bins = int(bins)
+
+        slices = np.linspace(
+            0,
+            self.freq.size,
+            bins + 1,
+            True
+        ).astype(np.int)
+        counts = np.diff(slices)
+        return SpecData(
+            data=np.expand_dims(np.add.reduceat(self.amp, slices[:-1]) / counts, axis=0),
+            time=self.time.copy(),
+            freq=np.add.reduceat(self.freq, slices[:-1]) / counts,
+            stokes=self.meta['stokes']
+            )
+
+
     def tmean(self, t1=None, t2=None, method='mean',):
         """ Average over the time.
             
