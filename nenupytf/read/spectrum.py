@@ -14,7 +14,10 @@ __all__ = [
 
 
 from nenupytf.read import ObsRepo, Lane
+from nenupytf.stokes import SpecData
 from nenupytf.other import to_unix, ProgressBar
+
+import numpy as np
 
 
 # ============================================================= #
@@ -223,28 +226,61 @@ class Spectrum(ObsRepo):
         time = self.time.copy()
         
         start, stop = time
-        # fbins = 
 
+        # # No predefined array
+        # bar = ProgressBar(
+        #     valmax=(stop-start)/dt,
+        #     title='Averaging...')
+        # while start <= stop:
+        #     if not 'spec' in locals():
+        #         spec = self.select(
+        #             stokes=stokes,
+        #             time=[start, start+dt],
+        #             freq=freq,
+        #             beam=beam
+        #         ).tmean().frebin((freq[1]-freq[0])/df)
+        #     else:
+        #         spec = spec | self.select(
+        #             stokes=stokes,
+        #             time=[start, start+dt],
+        #             freq=freq,
+        #             beam=beam
+        #         ).tmean().frebin((freq[1]-freq[0])/df)
+        #     start += dt
+        #     bar.update()
+
+        # Predefined array
+        ntimes = int(np.ceil((stop - start)/dt))
+        nfreqs = int((freq[1]-freq[0])/df)
+        avg_data = np.zeros(
+            (ntimes, nfreqs)
+        )
+        avg_time = np.zeros(ntimes)
+        avg_freq = np.zeros(nfreqs)
+        i = 0
         bar = ProgressBar(
-            valmax=(stop-start)/dt,
+            valmax=ntimes,
             title='Averaging...')
-        while start <= stop:
-            if not 'spec' in locals():
-                spec = self.select(
-                    stokes=stokes,
-                    time=[start, start+dt],
-                    freq=freq,
-                    beam=beam
-                ).tmean().frebin((freq[1]-freq[0])/df)
-            else:
-                spec = spec | self.select(
-                    stokes=stokes,
-                    time=[start, start+dt],
-                    freq=freq,
-                    beam=beam
-                ).tmean().frebin((freq[1]-freq[0])/df)
+        while start < stop:
+            tmp_spec = self.select(
+                stokes=stokes,
+                time=[start, start+dt],
+                freq=freq,
+                beam=beam
+            ).tmean().frebin((freq[1]-freq[0])/df)
+            avg_data[i, :] = tmp_spec.amp
+            avg_time[i] = start + dt/2
+            avg_freq = tmp_spec.freq
+            i += 1
             start += dt
             bar.update()
+        spec = SpecData(
+            data=avg_data,
+            time=to_unix(avg_time),
+            freq=avg_freq,
+            stokes=stokes
+            )
+
         return spec
 
 
