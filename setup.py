@@ -9,7 +9,7 @@ setup(
     name = 'nenupytf',
     packages = find_packages(),
     include_package_data = True,
-    install_requires = ['numpy', 'astropy'],
+    install_requires = ['numpy', 'astropy', 'psutil'],
     python_requires = '>=3.5',
     scripts = [
         'bin/nenupytf-plot',
