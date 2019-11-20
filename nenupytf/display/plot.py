@@ -18,16 +18,22 @@ import matplotlib.pyplot as plt
 import numpy as np
  
 
-def plot(specdata, savefile=None):
+def plot(specdata, savefile=None, **kwargs):
     """
     """
+    if 'vmin' not in kwargs.keys():
+        kwargs['vmin'] = np.percentile(specdata.amp, 5)
+    if 'vmax' not in kwargs.keys():
+        kwargs['vmax'] = np.percentile(specdata.amp, 95)
+    if 'cmap' not in kwargs.keys():
+        kwargs['cmap'] = 'YlGnBu_r'
+
     pcm = plt.pcolormesh(
         (specdata.time - specdata.time[0]).sec,
         specdata.freq,
         specdata.amp.T,
-        vmin=np.percentile(specdata.amp, 5),
-        vmax=np.percentile(specdata.amp, 95),
-        cmap='YlGnBu_r')
+        **kwargs
+    )
     
     cbar = plt.colorbar(pcm)
     
@@ -42,16 +48,22 @@ def plot(specdata, savefile=None):
     return
 
 
-def plotdb(specdata, savefile=None):
+def plotdb(specdata, savefile=None, **kwargs):
     """
     """
+    if 'vmin' not in kwargs.keys():
+        kwargs['vmin'] = np.percentile(specdata.db, 5)
+    if 'vmax' not in kwargs.keys():
+        kwargs['vmax'] = np.percentile(specdata.db, 95)
+    if 'cmap' not in kwargs.keys():
+        kwargs['cmap'] = 'YlGnBu_r'
+
     pcm = plt.pcolormesh(
         (specdata.time - specdata.time[0]).sec,
         specdata.freq,
         specdata.db.T,
-        vmin=np.percentile(specdata.db, 5),
-        vmax=np.percentile(specdata.db, 95),
-        cmap='YlGnBu_r')
+        **kwargs
+    )
     
     cbar = plt.colorbar(pcm)
     
