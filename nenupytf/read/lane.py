@@ -294,7 +294,7 @@ class Lane(object):
 
     # --------------------------------------------------------- #
     # ------------------------ Methods ------------------------ #
-    def select(self, stokes='I', time=None, freq=None, beam=None):
+    def select(self, stokes='I', time=None, freq=None, beam=None, bp_corr=True):
         """ Select data within a lane file.
             If the selection appears to be too big regarding
             available memory, an error should be raised.
@@ -321,6 +321,8 @@ class Lane(object):
                 Beam index, refer to observation setup to see the
                 details of the different observed beams.
                 Default: `None` consider index 0.
+            bp_corr : bool
+                Compute the bandpass correction
 
             Returns
             -------
@@ -372,7 +374,8 @@ class Lane(object):
             data=self.memdata['data'],
             stokes=stokes,
             nffte=self.nffte,
-            fftlen=self.fftlen
+            fftlen=self.fftlen,
+            bp_corr=bp_corr
             )[
             tmin_idx:tmax_idx + 1,
             fmin_idx:fmax_idx + 1,

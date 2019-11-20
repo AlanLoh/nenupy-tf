@@ -29,7 +29,7 @@ from nenupytf.other import allowed_stokes
 class NenuStokes(object):
     """
     """
-    def __init__(self, data, stokes, nffte, fftlen):
+    def __init__(self, data, stokes, nffte, fftlen, bp_corr=True):
         self.data = data
         self.stokes = stokes
         self.nffte = nffte
@@ -37,6 +37,7 @@ class NenuStokes(object):
         self.ntblocks = None
         self.nfblocks = None
         self.sel_slice = None
+        self.bp_corr = bp_corr
 
 
     def __getitem__(self, slice_val):
@@ -54,7 +55,10 @@ class NenuStokes(object):
             stokes_v = Stokes_V(self.data)[slice_val]
             data = stokes_v/stokes_i
 
-        return self.correct(data)
+        return self.correct(
+            data=data,
+            bandpass=self.bp_corr
+            )
 
 
     @property
@@ -85,7 +89,7 @@ class NenuStokes(object):
             raise ValueError('Wrong Stokes parameter.')
 
 
-    def correct(self, data):
+    def correct(self, data, bandpass=True):
         """ Transfom the data into a 2D array of time-frquency
             Invert the halves of each beamlet
             Correct for bandpass
@@ -110,14 +114,17 @@ class NenuStokes(object):
         data = data[:, f_idx]
 
         # Bandpass correction
-        spectrum = np.median(data, axis=0)
-        folded = spectrum.reshape(
-            (int(spectrum.size / self.fftlen), self.fftlen)
-            )
-        broadband = np.median(folded, axis=1)
-        broadband = np.repeat(broadband, self.fftlen)
-        
-        return data / spectrum * broadband
+        if bandpass:
+            spectrum = np.median(data, axis=0)
+            folded = spectrum.reshape(
+                (int(spectrum.size / self.fftlen), self.fftlen)
+                )
+            broadband = np.median(folded, axis=1)
+            broadband = np.repeat(broadband, self.fftlen)
+            
+            return data / spectrum * broadband
+        else:
+            return data
 # ============================================================= #
 
 

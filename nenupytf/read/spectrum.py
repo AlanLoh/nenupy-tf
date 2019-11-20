@@ -96,7 +96,7 @@ class Spectrum(ObsRepo):
 
     # --------------------------------------------------------- #
     # ------------------------ Methods ------------------------ #
-    def select(self, stokes='I', **kwargs):
+    def select(self, stokes='I', bp_corr=True, **kwargs):
         """ Select among the data stored in the directory according
             to a time range, a frequency range and a beam index
             and return them converted in the chosen Stokes parameter.
@@ -113,6 +113,8 @@ class Spectrum(ObsRepo):
             ----------
             stokes : {'I', 'Q', 'U', 'V', 'fracV'}, optional, default: 'I'
                 Stokes parameter value to convert raw data to.
+            bp_corr : bool
+                Compute the bandpass correction
 
             Other Parameters
             ----------------
@@ -174,7 +176,8 @@ class Spectrum(ObsRepo):
                     stokes=stokes,
                     time=[to_unix(t).isot for t in self.time],
                     freq=self.freq,
-                    beam=self.beam
+                    beam=self.beam,
+                    bp_corr=bp_corr
                 )
 
             else:
@@ -186,14 +189,15 @@ class Spectrum(ObsRepo):
                     stokes=stokes,
                     time=[to_unix(t).isot for t in self.time],
                     freq=self.freq,
-                    beam=self.beam
+                    beam=self.beam,
+                    bp_corr=bp_corr
                 )
 
             del l
         return spec
 
 
-    def average(self, stokes='I', df=1, dt=1, **kwargs):
+    def average(self, stokes='I', df=1, dt=1, bp_corr=True, **kwargs):
         """
             Parameters
             ----------
@@ -203,6 +207,8 @@ class Spectrum(ObsRepo):
                 Frequency step in MHz on which average.
             dt : float
                 Time step in seconds on which average.
+            bp_corr : bool
+                Compute the bandpass correction
 
             Other Parameters
             ----------------
@@ -266,7 +272,8 @@ class Spectrum(ObsRepo):
                 stokes=stokes,
                 time=[start, start+dt],
                 freq=freq,
-                beam=beam
+                beam=beam,
+                bp_corr=bp_corr,
             ).tmean().frebin((freq[1]-freq[0])/df)
             avg_data[i, :] = tmp_spec.amp
             avg_time[i] = start + dt/2
