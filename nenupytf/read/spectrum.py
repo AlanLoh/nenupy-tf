@@ -267,7 +267,7 @@ class Spectrum(ObsRepo):
         bar = ProgressBar(
             valmax=ntimes,
             title='Averaging...')
-        while start < stop:
+        while start < stop - dt:
             tmp_spec = self.select(
                 stokes=stokes,
                 time=[start, start+dt],
