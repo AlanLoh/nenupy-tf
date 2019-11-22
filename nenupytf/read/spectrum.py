@@ -171,6 +171,10 @@ class Spectrum(ObsRepo):
         self._parameters(**kwargs)
 
         mask = self._bmask * self._fmask * self._tmask
+        if all(~mask):
+            raise ValueError(
+                'Empty selection, check parameter ranges'
+            )
 
         for f in self.desctab[mask]['file']:
             l = Lane(f)
