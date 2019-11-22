@@ -361,14 +361,14 @@ class Lane(object):
             id_max=tmax_idx + 1
             )
         t_mask = (times >= to_unix(self.time[0])) &\
-            (times <= to_unix(self.time[1]))
+            (times < to_unix(self.time[1]))
         
         freqs = self._get_freq(
             id_min=fmin_idx,
             id_max=fmax_idx + 1
             )
         f_mask = (freqs >= self.freq[0]) &\
-            (freqs <= self.freq[1])
+            (freqs < self.freq[1])
         
         spectrum = NenuStokes(
             data=self.memdata['data'],

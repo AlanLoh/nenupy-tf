@@ -56,7 +56,7 @@ class SpecData(object):
             new_data = np.hstack((other.data, self.data))
             new_time = self.time
             new_freq = np.concatenate((other.freq, self.freq))
-        
+
         return SpecData(
             data=new_data,
             time=new_time,
@@ -79,14 +79,14 @@ class SpecData(object):
                     )
 
         if self.time.max() < other.time.min():
-            new_data = np.hstack((self.data, other.data))
+            new_data = np.vstack((self.data, other.data))
             new_time = Time(np.concatenate((self.time, other.time)))
             new_freq = self.freq
         else:
-            new_data = np.hstack((other.data, self.data))
+            new_data = np.vstack((other.data, self.data))
             new_time = Time(np.concatenate((self.time, other.time)))
             new_freq = self.freq
-        
+
         return SpecData(
             data=new_data,
             time=new_time,
@@ -95,14 +95,18 @@ class SpecData(object):
             )
 
 
-
     def __add__(self, other):
         """ Add two SpecData
         """
-        self._check_conformity(other)
+        if isinstance(other, SpecData):
+            self._check_conformity(other)
+            add = other.amp
+        else:
+            self._check_value(other)
+            add = other 
 
         return SpecData(
-            data=self.amp + other.amp,
+            data=self.amp + add,
             time=self.time,
             freq=self.freq,
             stokes=self.meta['stokes']
@@ -112,10 +116,15 @@ class SpecData(object):
     def __sub__(self, other):
         """ Subtract two SpecData
         """
-        self._check_conformity(other)
+        if isinstance(other, SpecData):
+            self._check_conformity(other)
+            sub = other.amp
+        else:
+            self._check_value(other)
+            sub = other 
 
         return SpecData(
-            data=self.amp - other.amp,
+            data=self.amp - sub,
             time=self.time,
             freq=self.freq,
             stokes=self.meta['stokes']
@@ -125,10 +134,15 @@ class SpecData(object):
     def __mul__(self, other):
         """ Multiply two SpecData
         """
-        self._check_conformity(other)
+        if isinstance(other, SpecData):
+            self._check_conformity(other)
+            mul = other.amp
+        else:
+            self._check_value(other)
+            mul = other 
 
         return SpecData(
-            data=self.amp * other.amp,
+            data=self.amp * mul,
             time=self.time,
             freq=self.freq,
             stokes=self.meta['stokes']
@@ -138,10 +152,15 @@ class SpecData(object):
     def __truediv__(self, other):
         """ Divide two SpecData
         """
-        self._check_conformity(other)
+        if isinstance(other, SpecData):
+            self._check_conformity(other)
+            div = other.amp
+        else:
+            self._check_value(other)
+            div = other 
 
         return SpecData(
-            data=self.amp / other.amp,
+            data=self.amp / div,
             time=self.time,
             freq=self.freq,
             stokes=self.meta['stokes']
@@ -205,12 +224,11 @@ class SpecData(object):
 
     # --------------------------------------------------------- #
     # ------------------------ Methods ------------------------ #
-    def fmean(self, freq1=None, freq2=None, method='mean', clean=False):
+    def fmean(self, freq1=None, freq2=None, method='mean'):
         """ Average over the frequency.
             
             Parameters
             ----------
-
             freq1 : float
                 Lower frequency bound in MHz.
 
@@ -220,12 +238,8 @@ class SpecData(object):
             method : str
                 Method used to average (either 'mean' or 'median')
 
-            clean : bool
-                Apply a cleaning before averaging
-
             Returns
             -------
-
             averaged_data : SpecData
                 A new `SpecData` instance containging the averaged quantities.
         """
@@ -378,39 +392,7 @@ class SpecData(object):
             time=self.time,
             freq=self.freq,
             stokes=self.meta['stokes']
-            ) / bg
-
-
-    def bg_remove_v0(self, kernel=11, sigma=3):
-        """ Remove the background
-
-            Parameters
-            ----------
-
-            kernel : array_like
-                A scalar or an N-length list giving the size 
-                of the median filter window in each dimension. 
-                Elements of kernel_size should be odd. 
-                If kernel_size is a scalar, then this scalar is 
-                used as the size in each dimension. Default size 
-                is 3 for each dimension.
-        """
-        from scipy.signal import medfilt
-        if (self.data.shape[1] == 1) and (not isinstance(kernel, list)):
-            kernel = [kernel, 1]
-        filtered_data = np.zeros(self.data.shape)
-
-        tf = medfilt(self.data[:, :], kernel)
-        sig = np.std(self.data[:, :])
-        bad = (np.abs(self.data[:, :] - tf) / sig) > sigma
-        tf[~bad] = self.data[:, :].copy()[~bad]
-        filtered_data[:, :] = tf
-
-        return SpecData(
-            data=filtered_data,
-            time=self.time.copy(),
-            freq=self.freq.copy(),
-            polar=self.polar.copy())
+            ) - bg
 
 
     # --------------------------------------------------------- #
@@ -419,11 +401,6 @@ class SpecData(object):
         """ Checks that other if of same type, same time, 
             frequency ans Stokes parameters than self
         """
-        if not isinstance(other, SpecData):
-            raise TypeError(
-                'Not a SpecData'
-                )
-
         if self.meta['stokes'] != other.meta['stokes']:
             raise ValueError(
                 'Different Stokes parameters'
@@ -444,6 +421,24 @@ class SpecData(object):
                 'Not the same frequencies'
                 )
 
+        return
+
+
+    def _check_value(self, other):
+        """ Checks that other can be operated with self if
+            other is not a SpecData object
+        """
+        if isinstance(other, np.ndarray):
+            if other.shape != self.amp.shape:
+                raise ValueError(
+                    'Shape mismatch'
+                )
+        elif isinstance(other, (int, float)):
+            pass
+        else:
+            raise Exception(
+                'Operation unknown with {}'.format(type(other))
+            )
         return
 # ============================================================= #
 
