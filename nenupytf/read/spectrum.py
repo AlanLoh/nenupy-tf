@@ -113,8 +113,12 @@ class Spectrum(ObsRepo):
             ----------
             stokes : {'I', 'Q', 'U', 'V', 'fracV'}, optional, default: 'I'
                 Stokes parameter value to convert raw data to.
-            bp_corr : bool
-                Compute the bandpass correction
+            bp_corr : bool or int, optional, default: `True
+                Compute the bandpass correction.
+                `False`: do not compute any correction
+                `True``: compute the correction with Kaiser coefficients
+                `'median'`: compute a medianed correction
+                `'fft'`: correct the bandpass using FFT
 
             Other Parameters
             ----------------

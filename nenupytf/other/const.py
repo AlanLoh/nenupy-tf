@@ -12,8 +12,13 @@ __all__ = [
     'max_bsn',
     'allowed_stokes',
     'header_struct',
-    'bst_exts'
+    'bst_exts',
+    'compute_bandpass'
     ]
+
+
+from os.path import realpath, dirname, join
+import numpy as np
 
 
 # Maximal block sequence number
@@ -50,3 +55,25 @@ bst_exts = [
         ('pointing_ab', 5),
         ('pointing_b', 6)
     ]
+
+# Bandpass coefficients (from Cedric Viou)
+def compute_bandpass(fftlen):
+    module = dirname(realpath(__file__))
+    kaiser_file = join(module, 'bandpass_coeffs.dat')
+
+    kaiser = np.loadtxt(kaiser_file)
+
+    n_tap = 16
+    over_sampling = fftlen // n_tap
+    n_fft = over_sampling * kaiser.size
+
+    g_high_res = np.fft.fft(kaiser, n_fft)
+    mid = fftlen // 2
+    middle = np.r_[g_high_res[-mid:], g_high_res[:mid]]
+    right = g_high_res[mid:mid + fftlen]
+    left = g_high_res[-mid - fftlen:-mid]
+
+    g = 2**25/np.sqrt(np.abs(middle)**2 + np.abs(left)**2 + np.abs(right)**2)
+    return g**2.
+
+

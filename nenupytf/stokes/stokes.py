@@ -20,7 +20,7 @@ __all__ = [
 
 import numpy as np
 
-from nenupytf.other import allowed_stokes
+from nenupytf.other import allowed_stokes, compute_bandpass
 
 
 # ============================================================= #
@@ -115,14 +115,32 @@ class NenuStokes(object):
 
         # Bandpass correction
         if bandpass:
-            spectrum = np.median(data, axis=0)
-            folded = spectrum.reshape(
-                (int(spectrum.size / self.fftlen), self.fftlen)
+            if bandpass == 'median': 
+                spectrum = np.median(data, axis=0)
+                folded = spectrum.reshape(
+                    (int(spectrum.size / self.fftlen), self.fftlen)
+                    )
+                broadband = np.median(folded, axis=1)
+                broadband = np.repeat(broadband, self.fftlen)
+                return data / spectrum * broadband
+            elif bandpass == 'fft':
+                from scipy.signal import find_peaks
+                bp_fft = np.fft.fft(data)
+                # Find peaks
+                avg_fft = np.mean(np.abs(bp_fft), axis=0)
+                p_idx, meta = find_peaks(
+                    x=avg_fft,
+                    height=np.median(avg_fft) * 2.
                 )
-            broadband = np.median(folded, axis=1)
-            broadband = np.repeat(broadband, self.fftlen)
-            
-            return data / spectrum * broadband
+                # Put to zero peaks and neighbouring slices
+                p_idx = np.concatenate(
+                    (p_idx, p_idx + 1, p_idx - 1)
+                )
+                bp_fft[:, p_idx] = 0.
+                return np.abs(np.fft.ifft(bp_fft))
+            else:
+                bp = compute_bandpass(self.fftlen)
+                return data * np.tile(bp, data.shape[1]//bp.size)
         else:
             return data
 # ============================================================= #
