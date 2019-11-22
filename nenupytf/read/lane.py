@@ -333,6 +333,15 @@ class Lane(object):
         self.beam = beam
         self.time = time
         self.freq = freq
+
+        if self.time[1] - self.time[0] < self.dt:
+            raise ValueError(
+                'Time interval selected < {} sec'.format(self.dt)
+            )
+        if self.freq[1] - self.freq[0] < self.df:
+            raise ValueError(
+                'Frequency interval selected < {} MHz'.format(self.df)
+            )
         
         tmin_idx = self._t2bidx(
             time=self.time[0],
@@ -380,12 +389,6 @@ class Lane(object):
             tmin_idx:tmax_idx + 1,
             fmin_idx:fmax_idx + 1,
             ]
-
-        # return (
-        #     times[t_mask],
-        #     freqs[f_mask],
-        #     spectrum[t_mask, :][:, f_mask]
-        #     )
 
         return SpecData(
             data=spectrum[t_mask, :][:, f_mask],
