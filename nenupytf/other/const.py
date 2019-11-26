@@ -19,6 +19,7 @@ __all__ = [
 
 from os.path import realpath, dirname, join
 import numpy as np
+from functools import lru_cache
 
 
 # Maximal block sequence number
@@ -56,8 +57,13 @@ bst_exts = [
         ('pointing_b', 6)
     ]
 
-# Bandpass coefficients (from Cedric Viou)
+# Bandpass coefficients
+@lru_cache(maxsize=1) # keep the output in cache
 def compute_bandpass(fftlen):
+    """ Compute the bandpass for a beamlet in order to correct
+        for the shape.
+        (from Cedric Viou)
+    """
     module = dirname(realpath(__file__))
     kaiser_file = join(module, 'bandpass_coeffs.dat')
 

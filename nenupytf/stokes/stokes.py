@@ -96,25 +96,25 @@ class NenuStokes(object):
         """
         # Make a 2D array
         data = np.swapaxes(data, 1, 2)
-
         n_times = self.ntblocks * self.nffte
         n_freqs = self.nfblocks * self.fftlen
-        data = data.reshape((n_times, n_freqs))
 
         # Invert the halves of the beamlet
         if self.fftlen % 2. != 0.0:
             raise ValueError('Problem with fftlen value!')
-        f_idx = np.arange(data.shape[1])
-        tmp_shape = (
-            int(data.shape[1]/self.fftlen),
-            2,
-            int(self.fftlen/2)
+        data = data.reshape(
+            (
+                n_times,
+                int(n_freqs/self.fftlen),
+                2,
+                int(self.fftlen/2)
             )
-        f_idx = f_idx.reshape(tmp_shape)[:, ::-1, :].ravel()
-        data = data[:, f_idx]
+        )
+        data = data[:, :, ::-1, :].reshape((n_times, n_freqs))
 
         # Bandpass correction
         if bandpass:
+
             if bandpass == 'median': 
                 spectrum = np.median(data, axis=0)
                 folded = spectrum.reshape(
@@ -123,6 +123,7 @@ class NenuStokes(object):
                 broadband = np.median(folded, axis=1)
                 broadband = np.repeat(broadband, self.fftlen)
                 return data / spectrum * broadband
+
             elif bandpass == 'fft':
                 from scipy.signal import find_peaks
                 bp_fft = np.fft.fft(data)
@@ -138,9 +139,19 @@ class NenuStokes(object):
                 )
                 bp_fft[:, p_idx] = 0.
                 return np.abs(np.fft.ifft(bp_fft))
+
             else:
                 bp = compute_bandpass(self.fftlen)
-                return data * np.tile(bp, data.shape[1]//bp.size)
+                data = data.reshape(
+                    (
+                        n_times,
+                        int(n_freqs/bp.size),
+                        bp.size
+                    )
+                )
+                data *= bp[np.newaxis, np.newaxis]
+                return data.reshape((n_times, n_freqs))
+
         else:
             return data
 # ============================================================= #
