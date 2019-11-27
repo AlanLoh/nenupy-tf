@@ -31,7 +31,11 @@ allowed_stokes = [
     'q',
     'u',
     'v',
-    'fracv'
+    'fracv',
+    'xx',
+    'yy',
+    'argxy',
+    'phasexy'
     ]
 
 # Structure of header for each lane file

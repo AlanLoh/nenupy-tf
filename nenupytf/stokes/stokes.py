@@ -15,6 +15,8 @@ __all__ = [
     'Stokes_Q',
     'Stokes_U',
     'Stokes_V',
+    'CrossXX',
+    'CrossYY'
     ]
 
 
@@ -42,6 +44,7 @@ class NenuStokes(object):
 
     def __getitem__(self, slice_val):
         self.sel_slice = slice_val
+        
         if self.stokes == 'i':
             data = Stokes_I(self.data)[slice_val]
         elif self.stokes == 'q':
@@ -54,6 +57,18 @@ class NenuStokes(object):
             stokes_i = Stokes_I(self.data)[slice_val]
             stokes_v = Stokes_V(self.data)[slice_val]
             data = stokes_v/stokes_i
+        elif self.stokes == 'xx':
+            data = CrossXX(self.data)[slice_val]
+        elif self.stokes == 'yy':
+            data = CrossYY(self.data)[slice_val]
+        elif self.stokes == 'argxy':
+            re = Stokes_U(self.data)[slice_val]
+            im = Stokes_V(self.data)[slice_val]
+            data = np.abs( re + 1j * im)
+        elif self.stokes == 'phasexy':
+            re = Stokes_U(self.data)[slice_val]
+            im = Stokes_V(self.data)[slice_val]
+            data = np.angle( re + 1j * im)
 
         return self.correct(
             data=data,
@@ -267,5 +282,39 @@ class Stokes_V(LaneDSpec):
         selection = self.fft1[slice_val]
         selection = selection[..., 1] * (-2)
         return selection
+# ============================================================= #
+
+
+# ============================================================= #
+# -------------------------- CrossXX -------------------------- #
+# ============================================================= #
+class CrossXX(LaneDSpec):
+    """
+    """
+
+    def __init__(self, data):
+        super().__init__(data=data)
+
+
+    def __getitem__(self, slice_val):
+        selection = self.fft0[slice_val]
+        return selection[..., 0] * 2
+# ============================================================= #
+
+
+# ============================================================= #
+# -------------------------- CrossYY -------------------------- #
+# ============================================================= #
+class CrossYY(LaneDSpec):
+    """
+    """
+
+    def __init__(self, data):
+        super().__init__(data=data)
+
+
+    def __getitem__(self, slice_val):
+        selection = self.fft0[slice_val]
+        return selection[..., 1] * 2
 # ============================================================= #
 
