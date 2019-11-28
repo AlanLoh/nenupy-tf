@@ -18,7 +18,7 @@ help:
 #	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 
 rst:
-	sphinx-apidoc -o . ../nenupytf -f
+	sphinx-apidoc -o . ../nenupytf --force --separate --implicit-namespaces --templatedir ./_templates
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

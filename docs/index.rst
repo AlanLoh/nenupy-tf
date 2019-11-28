@@ -6,29 +6,51 @@
 Welcome to nenupytf's documentation!
 ====================================
 
-##################################
-Introduction
-##################################
+The ``nenupytf`` Python package is aimed at the analysis of 
+`NenuFAR <https://nenufar.obs-nancay.fr/en/astronomer/>`_ high-rate 
+time-frequency output data from the *UnDySPuTeD* backend.
 
-Give a quick introduction.
+.. _getting-started:
 
-test autodoc
-
-This is the table of contents:
+***************
+Getting Started
+***************
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
 
    install
    quickstart
-   nenupytf.display
+
+.. _user-docs:
+
+******************
+User Documentation
+******************
+
+Data reading
+------------
+
+.. toctree::
+   :maxdepth: 2
+
    nenupytf.read
    nenupytf.stokes
 
 
-Indices and tables
-==================
+Analysis and utilities
+----------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   nenupytf.display
+   nenupytf.process
+
+
+*****
+Index
+*****
 
 * :ref:`genindex`
 * :ref:`modindex`

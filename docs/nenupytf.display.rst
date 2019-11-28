@@ -1,22 +1,16 @@
-nenupytf.display package
-========================
-
-Submodules
-----------
-
-nenupytf.display.plot module
-----------------------------
-
-.. automodule:: nenupytf.display.plot
-   :members:
-   :undoc-members:
-   :show-inheritance:
+nenupytf.display 
+=================
 
 
-Module contents
----------------
+
+.. toctree::
+
+   nenupytf.display.plot
+
+
 
 .. automodule:: nenupytf.display
    :members:
    :undoc-members:
    :show-inheritance:
+

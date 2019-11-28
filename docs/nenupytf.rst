@@ -1,5 +1,5 @@
-nenupytf package
-================
+nenupytf 
+=========
 
 Subpackages
 -----------
@@ -12,22 +12,16 @@ Subpackages
    nenupytf.read
    nenupytf.stokes
 
-Submodules
-----------
-
-nenupytf.metadata module
-------------------------
-
-.. automodule:: nenupytf.metadata
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 
-Module contents
----------------
+.. toctree::
+
+   nenupytf.metadata
+
+
 
 .. automodule:: nenupytf
    :members:
    :undoc-members:
    :show-inheritance:
+

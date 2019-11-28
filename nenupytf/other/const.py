@@ -2,6 +2,13 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+    *****
+    const
+    *****
+"""
+
+
 __author__ = ['Alan Loh']
 __copyright__ = 'Copyright 2019, nenupytf'
 __credits__ = ['Alan Loh']

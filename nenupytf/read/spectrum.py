@@ -2,6 +2,15 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+    ********
+    Spectrum
+    ********
+
+    Test de docstring
+"""
+
+
 __author__ = ['Alan Loh']
 __copyright__ = 'Copyright 2019, nenupytf'
 __credits__ = ['Alan Loh']
@@ -50,6 +59,26 @@ class Spectrum(ObsRepo):
 
     @property
     def time(self):
+        """ Time range selection.
+
+            This attribute can be set either directly or via
+            specific keyword arguments in :func:`select()` and
+            :func:`average()`.
+
+            :setter: Length-2 list defining the selected time
+                range: `[time_min, time_max]` where `time_min`
+                and `time_max` are in ISO/ISOT formats
+            
+            :getter: Time range
+            
+            :type: list
+
+            :Example:
+            
+            >>> from nenupytf.read import Spectrum
+            >>> s = Spectrum('/path/to/observation/')
+            >>> s.time = ['2019-10-03 14:30:00', '2019-10-03 18:31:01.34']
+        """
         return self._time.copy()
     @time.setter
     def time(self, t):
@@ -136,7 +165,7 @@ class Spectrum(ObsRepo):
 
             Returns
             -------
-            spec : `~.stokes.SpecData`
+            spec : :py:class:`.SpecData`
                 The selected data are returned via a `SpecData`
                 instance, with a set of methods and attributes
                 to easily get times and amplitudes in various
@@ -145,27 +174,26 @@ class Spectrum(ObsRepo):
 
             Examples
             --------
-            ::
-                # Load the module
-                from nenupytf.read import Spectrum
+                Load the module
+                >>> from nenupytf.read import Spectrum
                 
-                # Creates an instance for the observation stored
-                # in a given repository  
-                s = Spectrum('/path/to/observation/')
+                Creates an instance for the observation stored
+                in a given repository  
+                >>> s = Spectrum('/path/to/observation/')
                 
-                # Display main informations
-                s.info()
+                Display main informations
+                >>> s.info()
 
-                # Data selection
-                spec = s.select(
-                    freq=[35, 40],
-                    time=['2019-11-04T12:15:55.0000000', '2019-11-04T12:15:57.0000000'], 
-                    beam=0
-                )
+                Data selection
+                >>> spec = s.select(
+                        freq=[35, 40],
+                        time=['2019-11-04T12:15:55.0000000', '2019-11-04T12:15:57.0000000'], 
+                        beam=0
+                    )
 
-                # Plot the data
-                from nenupytf.display import plotdb
-                plotdb(spec)
+                Plot the data
+                >>> from nenupytf.display import plotdb
+                >>> plotdb(spec)
 
         """
         self._parameters(**kwargs)
@@ -206,31 +234,42 @@ class Spectrum(ObsRepo):
 
 
     def average(self, stokes='I', df=1, dt=1, bp_corr=True, **kwargs):
-        """
-            Parameters
-            ----------
-            stokes : {'I', 'Q', 'U', 'V', 'fracV'}, optional, default: 'I'
-                Stokes parameter value to convert raw data to.
-            df : float
-                Frequency step in MHz on which average.
-            dt : float
-                Time step in seconds on which average.
-            bp_corr : bool
-                Compute the bandpass correction
+        """ Average in time and frequency *NenuFAR/UnDySPuTeD* high
+            rate time-frequency data.
 
-            Other Parameters
-            ----------------
-            **kwargs
-                Data selection can be applied on three parameters,
-                namely `freq`, `time` and `beam`.
-                - freq : list, optional, default: [fmin, fmax]
-                    Frequency range in MHz passed as a lenght-2
-                    list.
-                - time : list, optional, default: [tmin, tmax]
-                    Time range in ISOT or ISO format passed as
-                    a length-2 list.
-                - beam : int, optional, default: 0
-                    Beam index.
+            :param stokes: Stokes parameter value to convert raw data to
+            :param df: Frequency resolution in MHz on which
+                the averaging is performed
+            :param dt: Time resolution in seconds on which
+                the average is performed
+            :param bp_corr: Compute the bandpass correction
+            
+            :type stokes: str
+            :type df: int, float
+            :type dt: int, float
+            :type bp_corr: bool
+            
+            :returns: `SpecData` object, embedding the stackev averaged spectra
+            :rtype: :class:`.SpecData`
+
+            :Example:
+            
+            >>> from nenupytf.read import Spectrum
+            >>> s = Spectrum('/path/to/observation/')
+            >>> spec = s.average(
+                    time=['2019-10-03 14:30:00', '2019-10-03 18:31:01.34'],
+                    freq=[34.5, 40],
+                    dt=0.01,
+                    df=0.5,
+                    stokes='I'
+                )
+
+            .. note:: can be useful to emphasize
+                important feature
+            .. seealso:: :func:`select()` :class:`.SpecData`
+            .. warning:: This may take a significant time to process
+                depending on the time and frequency ranges and the
+                required time and frequency resolution
         """
         self._parameters(**kwargs)
 
