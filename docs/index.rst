@@ -12,36 +12,26 @@ time-frequency output data from the *UnDySPuTeD* backend.
 
 .. _getting-started:
 
-***************
-Getting Started
-***************
-
 .. toctree::
+   :caption: Getting Started
    :maxdepth: 1
 
    install
    quickstart
 
-.. _user-docs:
-
-******************
-User Documentation
-******************
-
-Data reading
-------------
+.. _data-reading:
 
 .. toctree::
+   :caption: Data reading
    :maxdepth: 2
 
    nenupytf.read
    nenupytf.stokes
 
-
-Analysis and utilities
-----------------------
+.. _data-analysis:
 
 .. toctree::
+   :caption: Analysis
    :maxdepth: 2
 
    nenupytf.display

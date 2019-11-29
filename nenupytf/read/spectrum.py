@@ -7,7 +7,74 @@
     Spectrum
     ********
 
-    Test de docstring
+
+    The :mod:`.read` module contains two main object classes,
+    namely :class:`.Lane` and :class:`.Spectrum`.
+    Both are aiming at easy data selection from *NenuFAR/UnDySPuTeD*
+    binary files, which are created one for each lane of the backend,
+    depending on the observation setup.
+    
+    The former is working at the lowest file level, hence handling 
+    *NenuFAR/UnDySPuTeD* files independently from one another.
+
+    :class:`.Spectrum` is a higher level object class, able to work on
+    different files from a given observation. Therefore, if for example,
+    a particular observed beam is spread over two lane files (each one
+    covering half of the frequency bandwidth), a full frequency selection
+    would return data gathered from those two files.
+    To do so, :class:`.Spectrum` first determine which files are 
+    encompassing the data selection and then calls for :class:`.Lane`
+    to perform the refined selection.
+
+    
+    **Initialization**
+    
+    The :class:`.Spectrum` object needs to be provided with a path to
+    an observation directory, for e.g., ``'/path/to/observation'``, by
+    default the current directory is used.
+
+    >>> from nenupytf.read import Spectrum
+    >>> spectrum = Spectrum('/path/to/observation') 
+
+
+    **Data selection**
+
+    High-rate time-frequency data can be selected among different
+    parameters (handled as attributes of the class :class:`.Spectrum`),
+    namely: :attr:`Spectrum.beam`, :attr:`Spectrum.time` and
+    :attr:`Spectrum.freq`. These attributes can also be set while
+    they are passed as keyword arguments in :func:`Spectrum.select`
+    and :func:`Spectrum.average`.
+
+    Observation parameters can be quickly displayed to ease the
+    parameter selection thanks to :func:`.info`:
+
+    >>> spectrum.info()
+
+    * :attr:`Spectrum.beam` defines the selected beam index.
+    * :attr:`Spectrum.time` defines the selection time range.
+    * :attr:`Spectrum.freq` defines the selection frequency range.
+
+
+    **Polyphase filter correction**
+    
+    Reconstructed sub-bands may not display a flat bandpass due
+    to polyphase filter response. It may be usefull to correct
+    for this effect and reduce dynamic spectra artefacts.
+
+    Several correction options are available, set by user at the 
+    :func:`Spectrum.select` and :func:`Spectrum.average` function
+    levels with the :attr:`bp_corr` keyword. By default, this
+    keyword is set to ``bp_corr=True`` to apply a precomputed
+    correction. The default option is pretty fast to apply and is
+    convenient in most situations although it may leave smal 
+    artefacts at the sub-band edges. Same kind of artefacts
+    are present if ``bp_corr='fft'``, however the computation
+    time is increased as the sub-band bandpasses are corrected
+    within the Fourier domain. ``bp_corr='median'`` correction
+    allows for most reduced aretfacts. However, the latter may
+    significantly alter the signal if the dynamic spectrum is not
+    relatively smooth, use with caution! 
 """
 
 
@@ -33,10 +100,23 @@ import numpy as np
 # ------------------------- Spectrum -------------------------- #
 # ============================================================= #
 class Spectrum(ObsRepo):
-    """
+    """ :class:`Spectrum` is the class designed to work with
+        several lane files from the *UnDySPuTeD* backend. Once 
+        instanciated, a `Spectrum` object has a view of all file
+        informations within the :attr:`directory`. This means 
+        that a selection may involve several lane files to search
+        for data, regardless of the lane index.
+
+        :param directory: Directory where observation files are
+            stored
+        :type directory: str, optional
+
+        :Example:
+        >>> from nenupytf.read import Spectrum
+        >>> s = Spectrum('/path/to/observation/')
     """
 
-    def __init__(self, directory):
+    def __init__(self, directory=''):
         super().__init__(repo=directory)
         self.beam = None
         self.freq = None
@@ -47,6 +127,26 @@ class Spectrum(ObsRepo):
     # --------------------- Getter/Setter --------------------- #
     @property
     def beam(self):
+        """ Beam selection.
+
+            This attribute can be set either directly or via
+            specific keyword arguments in :func:`select()` and
+            :func:`average()`.
+
+            Default value is `0`.
+            
+            :setter: Beam index
+            
+            :getter: Beam index
+            
+            :type: int
+
+            :Example:
+            
+            >>> from nenupytf.read import Spectrum
+            >>> s = Spectrum('/path/to/observation/')
+            >>> s.beam = 1
+        """
         return self._beam
     @beam.setter
     def beam(self, b):
@@ -64,6 +164,8 @@ class Spectrum(ObsRepo):
             This attribute can be set either directly or via
             specific keyword arguments in :func:`select()` and
             :func:`average()`.
+
+            Default value is `[obs_tmin, obs_tmax]`
 
             :setter: Length-2 list defining the selected time
                 range: `[time_min, time_max]` where `time_min`
@@ -103,6 +205,28 @@ class Spectrum(ObsRepo):
 
     @property
     def freq(self):
+        """ Frequency range selection.
+            
+            This attribute can be set either directly or via
+            specific keyword arguments in :func:`select()` and
+            :func:`average()`.
+
+            Default value is `[obs_fmin, obs_fmax]`
+
+            :setter: Length-2 list defining the selected frequency
+                range: `[freq_min, freq_max]` where `freq_min`
+                and `freq_max` are in MHz
+            
+            :getter: Frequency range
+            
+            :type: list
+
+            :Example:
+            
+            >>> from nenupytf.read import Spectrum
+            >>> s = Spectrum('/path/to/observation/')
+            >>> s.freq = [54, 66]
+        """
         return self._freq.copy()
     @freq.setter
     def freq(self, f):
@@ -126,75 +250,67 @@ class Spectrum(ObsRepo):
     # --------------------------------------------------------- #
     # ------------------------ Methods ------------------------ #
     def select(self, stokes='I', bp_corr=True, **kwargs):
-        """ Select among the data stored in the directory according
-            to a time range, a frequency range and a beam index
-            and return them converted in the chosen Stokes parameter.
-            NenuFAR-TF data can be spread over several lane files.
-            This will select the data nonetheless and concatenate
-            what is needed to ouptut a single `SpecData` object.
+        r""" Select among the data stored in the directory 
+            according to a :attr:`Spectrum.time` range, a
+            :attr:`Spectrum.freq` range and a 
+            :attr:`Spectrum.beam` index and return them converted
+            in the chosen Stokes parameter. NenuFAR-TF data can
+            be spread over several lane files. This will select
+            the data nonetheless and concatenate what is needed
+            to ouptut a single :class:`.SpecData` object.
 
-            This may be usefull to call for `.info()` method prior
-            to select the data in order to know the time and 
-            frequency boundaries of the observation as well as 
-            recorded beam indices.
+            This may be usefull to call for :func:`ObsRepo.info()`
+            method prior to select the data in order to know the
+            time and frequency boundaries of the observation as
+            well as recorded beam indices.
 
-            Parameters
-            ----------
-            stokes : {'I', 'Q', 'U', 'V', 'fracV'}, optional, default: 'I'
-                Stokes parameter value to convert raw data to.
-            bp_corr : bool or int, optional, default: `True
-                Compute the bandpass correction.
-                `False`: do not compute any correction
-                `True``: compute the correction with Kaiser coefficients
-                `'median'`: compute a medianed correction
-                `'fft'`: correct the bandpass using FFT
+            :param stokes:
+                Stokes parameter value to convert raw data to,
+                allowed values are `{'I', 'Q', 'U', 'V', 'fracV',
+                'XX', 'YY'}`, defaults to `'I'`
+            :type stokes: str, optional
+            :param bp_corr:
+                Compute the bandpass correction, defaults to
+                `True`, possible values are 
 
-            Other Parameters
-            ----------------
-            **kwargs
-                Data selection can be applied on three parameters,
-                namely `freq`, `time` and `beam`.
-                - freq : list, optional, default: [fmin, fmax]
-                    Frequency range in MHz passed as a lenght-2
-                    list.
-                - time : list, optional, default: [tmin, tmax]
-                    Time range in ISOT or ISO format passed as
-                    a length-2 list.
-                - beam : int, optional, default: 0
-                    Beam index.
+                * `False`: do not compute any correction
+                * `True`: compute the correction with Kaiser
+                coefficients
+                * `'median'`: compute a medianed correction
+                * `'fft'`: correct the bandpass using FFT
 
-            Returns
-            -------
-            spec : :py:class:`.SpecData`
-                The selected data are returned via a `SpecData`
-                instance, with a set of methods and attributes
-                to easily get times and amplitudes in various
-                units as well as some basic dynamic spectrum
-                analysis tools.
+            :type bp_corr: bool, str, optional
+            :param \**kwargs:
+                See below for keyword arguments:
+            :param freq:
+                Frequency range in MHz passed as a lenght-2 list.
+            :type freq: list, optional
+            :param time:
+                Time range in ISOT or ISO format passed as a
+                length-2 list.
+            :type time: list, optional
+            :param beam:
+                Beam index.
+            :type beam: int, optional
 
-            Examples
-            --------
-                Load the module
-                >>> from nenupytf.read import Spectrum
-                
-                Creates an instance for the observation stored
-                in a given repository  
-                >>> s = Spectrum('/path/to/observation/')
-                
-                Display main informations
-                >>> s.info()
+            :returns: `SpecData` object, embedding the stacked
+                averaged spectra
+            :rtype: :class:`.SpecData`
 
-                Data selection
-                >>> spec = s.select(
-                        freq=[35, 40],
-                        time=['2019-11-04T12:15:55.0000000', '2019-11-04T12:15:57.0000000'], 
-                        beam=0
-                    )
+            :Example:
+            
+            >>> from nenupytf.read import Spectrum
+            >>> s = Spectrum('/path/to/observation/')
+            >>> spec = s.select(
+                    time=['2019-10-03 14:30:00', '2019-10-03 14:30:10.34'],
+                    freq=[34.5, 40],
+                    stokes='I'
+                )
 
-                Plot the data
-                >>> from nenupytf.display import plotdb
-                >>> plotdb(spec)
-
+            .. seealso:: :func:`average()` :class:`.SpecData`
+            .. warning:: This may take a significant time to
+                process depending on the time and frequency
+                ranges.
         """
         self._parameters(**kwargs)
 
@@ -233,23 +349,61 @@ class Spectrum(ObsRepo):
         return spec
 
 
-    def average(self, stokes='I', df=1, dt=1, bp_corr=True, **kwargs):
-        """ Average in time and frequency *NenuFAR/UnDySPuTeD* high
-            rate time-frequency data.
+    def average(
+            self,
+            stokes='I',
+            df=1.,
+            dt=1.,
+            bp_corr=True,
+            **kwargs
+        ):
+        r""" Average in time and frequency *NenuFAR/UnDySPuTeD*
+            high rate time-frequency data.
 
-            :param stokes: Stokes parameter value to convert raw data to
-            :param df: Frequency resolution in MHz on which
-                the averaging is performed
-            :param dt: Time resolution in seconds on which
-                the average is performed
-            :param bp_corr: Compute the bandpass correction
-            
-            :type stokes: str
-            :type df: int, float
-            :type dt: int, float
-            :type bp_corr: bool
-            
-            :returns: `SpecData` object, embedding the stackev averaged spectra
+            Data are read by time blocks of size `dt` before
+            averaging by computing the mean over time. Then, the
+            spectrum is rebinned to a reconstructed frequency
+            axis with spaces around `df`.
+
+            :param stokes:
+                Stokes parameter value to convert raw data to,
+                allowed values are `{'I', 'Q', 'U', 'V', 'fracV',
+                'XX', 'YY'}`, defaults to `'I'`
+            :type stokes: str, optional
+            :param df:
+                Frequency resolution in MHz on which the
+                averaging is performed, defaults to `1.`
+            :type df: int, float, optional
+            :param dt:
+                Time resolution in seconds on which the average
+                is performed, defaults to `1.`
+            :type dt: int, float, optional
+            :param bp_corr:
+                Compute the bandpass correction, defaults to
+                `True`, possible values are 
+
+                * `False`: do not compute any correction
+                * `True`: compute the correction with Kaiser
+                    coefficients
+                * `'median'`: compute a medianed correction
+                * `'fft'`: correct the bandpass using FFT
+
+            :type bp_corr: bool, str, optional
+            :param \**kwargs:
+                See below for keyword arguments:
+            :param freq:
+                Frequency range in MHz passed as a lenght-2 list.
+            :type freq: list, optional
+            :param time:
+                Time range in ISOT or ISO format passed as a
+                length-2 list.
+            :type time: list, optional
+            :param beam:
+                Beam index.
+            :type beam: int, optional
+
+            :returns: `SpecData` object, embedding the stacked
+                averaged spectra
             :rtype: :class:`.SpecData`
 
             :Example:
@@ -264,12 +418,11 @@ class Spectrum(ObsRepo):
                     stokes='I'
                 )
 
-            .. note:: can be useful to emphasize
-                important feature
             .. seealso:: :func:`select()` :class:`.SpecData`
-            .. warning:: This may take a significant time to process
-                depending on the time and frequency ranges and the
-                required time and frequency resolution
+            .. warning:: This may take a significant time to
+                process depending on the time and frequency
+                ranges and the required time and frequency
+                resolution.
         """
         self._parameters(**kwargs)
 
@@ -279,28 +432,6 @@ class Spectrum(ObsRepo):
         time = self.time.copy()
         
         start, stop = time
-
-        # # No predefined array
-        # bar = ProgressBar(
-        #     valmax=(stop-start)/dt,
-        #     title='Averaging...')
-        # while start <= stop:
-        #     if not 'spec' in locals():
-        #         spec = self.select(
-        #             stokes=stokes,
-        #             time=[start, start+dt],
-        #             freq=freq,
-        #             beam=beam
-        #         ).tmean().frebin((freq[1]-freq[0])/df)
-        #     else:
-        #         spec = spec | self.select(
-        #             stokes=stokes,
-        #             time=[start, start+dt],
-        #             freq=freq,
-        #             beam=beam
-        #         ).tmean().frebin((freq[1]-freq[0])/df)
-        #     start += dt
-        #     bar.update()
 
         # Predefined array
         ntimes = int(np.ceil((stop - start)/dt))
