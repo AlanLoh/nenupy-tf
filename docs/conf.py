@@ -44,9 +44,11 @@ extensions = [
 # Add mappings
 intersphinx_mapping = {
     'astropy': ('https://docs.astropy.org/en/stable/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/reference/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'python': ('http://docs.python.org/3', None),
 }
+
+default_role = 'obj'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

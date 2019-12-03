@@ -3,9 +3,9 @@
 
 
 """
-    ****
+    *****
     Astro
-    ****
+    *****
 
     Test de docstring
 """
@@ -30,7 +30,7 @@ import astropy.units as u
 # ============================================================= #
 def dispersion_delay(f1, f2, dm):
     """ Compute the delay between two frequencies of a dispersed
-        astrophysical signal with a known dispersion measure
+        astrophysical signal with a known dispersion measure 
         :attr:`dm`.
 
         :param f1:
@@ -43,8 +43,14 @@ def dispersion_delay(f1, f2, dm):
             Dispersion measure in pc/cm^3
         :type dm: float
 
-        :returns: delay in seconds
-        :rtype: `astropy.units.quantity.Quantity`
+        :returns: Delay in seconds
+        :rtype: `~astropy.units.quantity.Quantity`
+
+        .. note:: :attr:`f1`, :attr:`f2` and :attr:`dm` are
+            converted to `~astropy.units.quantity.Quantity`
+            objects for the computation. Make sure the inputs
+            values are given in the proper units.     
+
     """
     dm *= u.parsec / u.cm**3
     f1 *= u.MHz

@@ -6,6 +6,7 @@ nenupytf.process
 .. toctree::
 
    nenupytf.process.analysis
+   nenupytf.process.astro
    nenupytf.process.fits_conversion
 
 

@@ -10,6 +10,7 @@ Subpackages
    nenupytf.other
    nenupytf.process
    nenupytf.read
+   nenupytf.simu
    nenupytf.stokes
 
 
